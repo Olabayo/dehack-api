@@ -1,0 +1,30 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: postgres
+    container_name: dehack_db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=dehack_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./seed/:/docker-entrypoint-initdb.d/:ro
+  api:
+    build: .
+    container_name: dehack_api
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_APP=dehack_api.app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres/dehack_db
+      - DATABASE_URL_TEST=postgresql://${DB_USER}:${DB_PASSWORD}@postgres/dehack_db_test
+      - FLASK_MAIL_PASSWORD="your_password"
+    volumes:
+      - ./dehack_api:/usr/src/app/dehack_api
+volumes:
+  postgres_data:
