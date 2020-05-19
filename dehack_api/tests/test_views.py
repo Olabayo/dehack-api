@@ -206,7 +206,7 @@ def test_protected_url(client):
     url = "/protected"
     response = client.get(url, headers = headers)
 
-    assert response.json["msg"] == "olabayo96@yahoo.com"
+    assert response.json["msg"] == "dehack96@yahoo.com"
 
 
 def test_password_change(client):
