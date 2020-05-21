@@ -34,7 +34,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-from .models import User, RegistrationProfile, PasswordReset
+from .models import User, RegistrationProfile, PasswordReset, Company, CompanyUser, State, City, CompanyAddress
 
 def init_db():
     db.create_all()
@@ -90,6 +90,100 @@ def root_view():
           $ref: '#/definitions/Status'
     """
     return jsonify({"msg": "Welcome to SweetBread"}), 200
+
+
+#/employers
+#HTTP Method: POST
+#Create a employer object
+@app.route('/employers', methods=['POST'])
+def store_employer():
+
+    """Endpoint for creating an employer
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            first_name:
+              type: string
+              description: First name.
+              example: Alice
+              required: true
+            last_name:
+              type: string
+              description: Last name.
+              example: Smith
+              required: true
+            email:
+              type: string
+              description: Email.
+              example: test@email.com
+              required: true
+            password:
+              type: string
+              description: Password.
+              example: password
+              required: true
+            company_name:
+              type: string
+              description: Company name.
+              example: password
+              required: true
+            company_phone:
+              type: string
+              description: Company name.
+              example: Cool company
+              required: true
+            company_email:
+              type: string
+              description: Company email.
+              example: coolcompany@email.com
+              required: true            
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Employer created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    content = request.json
+    if 'password' in content and 'email' in content and 'first_name' in content and 'last_name' in content and  'company_name' in content and  'company_phone' in content and  'company_email' in content:
+        try:
+            pass_hash = sha256_crypt.hash(content["password"])
+            user = User(content["email"], pass_hash, content["first_name"], content["last_name"])
+            db.session.add(user)
+            db.session.flush()
+            registrationProfile = RegistrationProfile(user.id)
+            db.session.add(registrationProfile)
+            company = Company(user.id, content["company_name"], content["company_phone"], content["company_email"])
+            db.session.add(company)
+            db.session.flush()
+            companyUser = CompanyUser(user.id, company.id)
+            db.session.add(companyUser)
+            db.session.commit()
+            activation_email(user.email, registrationProfile.activation_key, mail)
+            return jsonify({"msg": "employer created"}), 200
+        except Exception:
+             return jsonify({"msg": "server error"}), 500
+    else:
+        return jsonify({"msg": "Bad request"}), 400
 
 
 #/users
@@ -396,3 +490,171 @@ def change_password():
         return jsonify({"msg": "password changed"}), 200
     else:
         return jsonify({"msg": "bad request"}), 400
+
+
+@app.route('/states', methods=["GET"])
+def state_index():
+
+    """Endpoint used for listing states
+    This is using docstrings for specifications.
+    ---
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      State:
+        type: object
+        properties:
+          id:
+            type: integer
+          state_code:
+            type: string  
+          state_name:
+            type: string
+      ResponseState:
+          type: object
+          properties:
+            msg:
+              type: string
+            states:
+              type: array 
+              items:
+                $ref: '#/definitions/State'                           
+    responses:
+      200:
+        description: States
+        schema:
+          $ref: '#/definitions/ResponseState'  
+      400:
+        description: Bad request
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    state_list = State.query.all()
+    result = [s.to_dict() for s in state_list]
+    return jsonify({"msg": "success", "states": result}), 200
+
+#/cities?state_id=1
+#HTTP Method: GET
+@app.route('/cities', methods=['GET'])
+def city_index():
+
+    """Endpoint used for listing cities by their state
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: state_id
+        in: query
+        type: integer
+        required: true
+        description: State id for the cities 
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      City:
+        type: object
+        properties:
+          id:
+            type: integer
+          state_id:
+            type: integer  
+          city:
+            type: string
+          county:
+            type: string
+          longitude:
+            type: string
+          latitude:
+            type: string
+      ResponseCity:
+          type: object
+          properties:
+            msg:
+              type: string
+            cities:
+              type: array 
+              items:
+                $ref: '#/definitions/City'                           
+    responses:
+      200:
+        description: Cities
+        schema:
+          $ref: '#/definitions/ResponseCity'  
+      400:
+        description: Bad request
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    try:
+        state_id = int(request.args.get('state_id'))
+        city_list = City.query.filter_by(state_id=state_id).all()
+        result = [c.to_dict() for c in city_list]
+        return jsonify({"msg": "success", "cities": result}), 200
+    except Exception:
+        return jsonify({"msg": "Invalid page params"}), 400
+
+@app.route('/addresses', methods=['POST'])
+def store_address():
+
+    """Endpoint for creating company address
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            company_id:
+              type: string
+              description: Company id.
+              example: 1222-121231-474765-df4444
+              required: true
+            street:
+              type: string
+              description: Street.
+              example: 76 test street
+              required: true
+            state_id:
+              type: integer
+              description: State id.
+              example: 1
+              required: true
+            city_id:
+              type: integer
+              description: City id.
+              example: 1109
+              required: true            
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Address created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    content = request.json
+
+    if 'company_id' in content and 'state_id' in content and 'city_id' in content and 'street' in content:
+        companyAddress = CompanyAddress(content["company_id"], content["street"], content["state_id"], content["city_id"])
+        db.session.add(companyAddress)
+        db.session.commit()
+        return jsonify({"msg": "address created"}), 200 
+    else:
+        return jsonify({"msg": "Bad request"}), 400        

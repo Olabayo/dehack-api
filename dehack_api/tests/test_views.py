@@ -7,7 +7,8 @@ import json
 from passlib.hash import sha256_crypt
 
 from .. import app
-from ..models import User, RegistrationProfile, PasswordReset
+from ..models import User, RegistrationProfile, PasswordReset, Company, CompanyAddress, CompanyUser, \
+State, City
 
 
 @pytest.fixture
@@ -29,7 +30,7 @@ def test_health(client):
     """Start with a blank database."""
 
     response = client.get('/')
-
+    
     assert b'Welcome to SweetBread' in response.data
 
 def test_create_user(client):
@@ -48,7 +49,7 @@ def test_create_user(client):
     }
     url = '/users'
     with app.mail.record_messages() as outbox:
-
+    
         response = client.post(url, data=json.dumps(data), headers=headers)
         ifUserExist = User.query.filter_by(email=data["email"]).first()
         ifRegProfileExist = RegistrationProfile.query.filter_by(user_id=ifUserExist.id).first()
@@ -61,19 +62,19 @@ def test_create_user(client):
         assert len(outbox) == 1
         #assert outbox[0].subject == "testing"
 
-def test_activate_user(client):
+def test_activate_user(client):    
 
     mimetype = 'application/json'
     headers = {
         'Content-Type': mimetype,
         'Accept': mimetype
-    }
+    }  
     data = {
         'first_name': 'Olabayo',
         'last_name': 'Onile-Ere',
         'email': 'dehack@yahoo.com',
         'password': 'dehack'
-    }
+    } 
     pass_hash = sha256_crypt.hash(data["password"])
     user = User(data["email"], pass_hash, data["first_name"], data["last_name"])
     app.db.session.add(user)
@@ -99,16 +100,16 @@ def test_password_reset(client):
     user_data = {
         'first_name': 'Olabayo',
         'last_name': 'Onile-Ere',
-        'email': 'dehack96@yahoo.com',
+        'email': 'dehack@yahoo.com',
         'password': 'dehack'
-    }
+    } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
     app.db.session.add(user)
     app.db.session.commit()
     data = {
         'email': 'dehack@yahoo.com'
-    }
+    } 
     url = "/getresetkey"
     response = client.post(url, data= json.dumps(data), headers=headers)
     ifResetPassExist = PasswordReset.query.filter_by(email=data["email"]).first()
@@ -116,7 +117,7 @@ def test_password_reset(client):
     assert response.json['msg'] == 'password reset setup'
 
 
-def test_use_reset_key(client):
+def test_use_reset_key(client): 
 
     mimetype = 'application/json'
     headers = {
@@ -132,7 +133,7 @@ def test_use_reset_key(client):
     data = {
         'password': 'password2',
         'confirm_password': 'password2'
-    }
+    } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
     app.db.session.add(user)
@@ -162,9 +163,9 @@ def test_auth_login(client):
         'password': 'dehack'
     }
     data = {
-        'username': 'dehack96@yahoo.com',
+        'username': 'dehack@yahoo.com',
         'password': 'dehack'
-    }
+    } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
     app.db.session.add(user)
@@ -190,9 +191,9 @@ def test_protected_url(client):
         'password': 'dehack'
     }
     data = {
-        'username': 'dehack96@yahoo.com',
+        'username': 'dehack@yahoo.com',
         'password': 'dehack'
-    }
+    } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
     app.db.session.add(user)
@@ -206,7 +207,7 @@ def test_protected_url(client):
     url = "/protected"
     response = client.get(url, headers = headers)
 
-    assert response.json["msg"] == "dehack96@yahoo.com"
+    assert response.json["msg"] == "dehack@yahoo.com"
 
 
 def test_password_change(client):
@@ -225,7 +226,7 @@ def test_password_change(client):
     data = {
         'username': 'dehack@yahoo.com',
         'password': 'dehack'
-    }
+    } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
     app.db.session.add(user)
@@ -235,7 +236,7 @@ def test_password_change(client):
     response = client.post(url, data = json.dumps(data), headers = headers)
     headers["Authorization"] = "JWT " + response.json["access_token"]
     data = {
-        'current_password': 'password',
+        'current_password': 'dehack',
         'password': 'password2'
     }
     url = "/changepassword"
@@ -243,4 +244,116 @@ def test_password_change(client):
 
     assert response.json["msg"] == "password changed"
     userResetPass = User.query.filter_by(email = user_data["email"]).first()
-    assert sha256_crypt.verify(data["password"], userResetPass.password) == True
+    assert sha256_crypt.verify(data["password"], userResetPass.password) == True 
+
+
+def test_create_employer(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    url = "/employers"
+    data = {
+        'first_name': 'Olabayo',
+        'last_name': 'Onile-Ere',
+        'email': 'dehack@yahoo.com',
+        'password': 'dehack',
+        'company_name': 'Cool company name',
+        'company_phone': '9893399393939',
+        'company_email': 'coolcompany@email.com'
+    }
+    response = client.post(url, data = json.dumps(data), headers = headers)
+    ifUserExist = User.query.filter_by(email=data["email"]).first()
+    ifCompanyExist = Company.query.filter_by(user_id=ifUserExist.id).first()
+    ifCompanyUser = CompanyUser.query.filter_by(user_id=ifUserExist.id, company_id=ifCompanyExist.id).first()
+    assert bool(ifUserExist) == True
+    assert bool(ifCompanyExist) == True
+    assert bool(ifCompanyUser) == True
+    assert response.json["msg"] == "employer created"
+
+
+def test_get_states(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    url = "/states"
+
+    stateA = State("MA", "Massachusetts")
+    stateB = State("AZ", "Arizona")
+    app.db.session.add(stateA)
+    app.db.session.add(stateB)
+    app.db.session.commit()
+    response = client.get(url, headers=headers)
+
+    assert len(response.json["states"]) > 0
+
+
+def test_get_city(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    url = "/cities?state_id=1"
+
+    stateA = State("MA", "Massachusetts")
+    stateB = State("AZ", "Arizona")
+    app.db.session.add(stateA)
+    app.db.session.add(stateB)
+    app.db.session.flush()
+    cityA = City(stateA.id, "Lynn", "Essex", 42.463378,-70.945516)
+    app.db.session.add(cityA)
+    app.db.session.commit()
+    response = client.get(url, headers=headers)
+
+    assert len(response.json["cities"]) > 0
+
+def test_add_company_address(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    user_data = {
+        'first_name': 'Olabayo',
+        'last_name': 'Onile-Ere',
+        'email': 'dehackk@yahoo.com',
+        'password': 'dehack'
+    }
+    
+    pass_hash = sha256_crypt.hash(user_data["password"])
+    user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
+    app.db.session.add(user)
+    app.db.session.flush()
+    company = Company(user.id, "Cool company", "7647362765923", "coolcompany@email.com")
+    app.db.session.add(company)
+    app.db.session.flush()
+    companyUser = CompanyUser(user.id, company.id)
+    app.db.session.add(companyUser)
+    app.db.session.commit()
+    address_data = {
+        'company_id': str(company.id),
+        'state_id': 1,
+        'city_id': 1000,
+        'street': 'Test Street',
+        'zip_code': '01905'
+    }
+
+    url = "/addresses"
+
+    response = client.post(url, data = json.dumps(address_data), headers = headers)
+    ifCompanyAddressExist = CompanyAddress.query.filter_by(company_id=company.id).first()
+
+    assert response.json["msg"] == "address created"
+    assert bool(ifCompanyAddressExist) == True
