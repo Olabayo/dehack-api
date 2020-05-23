@@ -4,11 +4,43 @@ import tempfile
 import pytest
 import json
 
+import jwt as jwtmain
+
 from passlib.hash import sha256_crypt
 
 from .. import app
 from ..models import User, RegistrationProfile, PasswordReset, Company, CompanyAddress, CompanyUser, \
-State, City
+State, City, Profile, Education, WorkExperience
+
+from datetime import datetime, timedelta
+import uuid
+
+
+CONFIG_DEFAULTS = {
+    'JWT_DEFAULT_REALM': 'Login Required',
+    'JWT_AUTH_URL_RULE': '/auth',
+    'JWT_AUTH_ENDPOINT': 'jwt',
+    'JWT_AUTH_USERNAME_KEY': 'username',
+    'JWT_AUTH_PASSWORD_KEY': 'password',
+    'JWT_ALGORITHM': 'HS256',
+    'JWT_LEEWAY': timedelta(seconds=10),
+    'JWT_AUTH_HEADER_PREFIX': 'JWT',
+    'JWT_EXPIRATION_DELTA': timedelta(seconds=300),
+    'JWT_NOT_BEFORE_DELTA': timedelta(seconds=0),
+    'JWT_VERIFY_CLAIMS': ['signature', 'exp', 'nbf', 'iat'],
+    'JWT_REQUIRED_CLAIMS': ['exp', 'iat', 'nbf']
+}
+
+def default_jwt_payload_handler(identity):
+    iat = datetime.utcnow()
+    exp = iat + CONFIG_DEFAULTS.get('JWT_EXPIRATION_DELTA')
+    nbf = iat + CONFIG_DEFAULTS.get('JWT_NOT_BEFORE_DELTA')
+    identity = identity['id']
+    return {'exp': exp, 'iat': iat, 'nbf': nbf, 'identity': identity}
+
+def gen_key(identity):
+    payload = default_jwt_payload_handler(identity)
+    return jwtmain.encode(payload, "super-secret", algorithm="HS256", headers=None)
 
 
 @pytest.fixture
@@ -196,17 +228,19 @@ def test_protected_url(client):
     } 
     pass_hash = sha256_crypt.hash(user_data["password"])
     user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
+    myuuid = uuid.uuid4()
+    user.id = myuuid
     app.db.session.add(user)
     app.db.session.commit()
 
     url = "/auth"
-    response = client.post(url, data = json.dumps(data), headers = headers)
-
-    assert 'access_token' in response.json
-    headers["Authorization"] = "JWT " + response.json["access_token"]
+    #response = client.post(url, data = json.dumps(data), headers = headers)
+    #assert 'access_token' in response.json
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
     url = "/protected"
     response = client.get(url, headers = headers)
-
+    #assert str(myuuid) == access_token.decode('utf-8')
     assert response.json["msg"] == "dehack@yahoo.com"
 
 
@@ -357,3 +391,129 @@ def test_add_company_address(client):
 
     assert response.json["msg"] == "address created"
     assert bool(ifCompanyAddressExist) == True
+
+
+def test_create_profile(client):  
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    user_data = {
+        'first_name': 'Olabayo',
+        'last_name': 'Onile-Ere',
+        'email': 'dehackk@yahoo.com',
+        'password': 'dehack'
+    }
+    
+    pass_hash = sha256_crypt.hash(user_data["password"])
+    user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
+    myuuid = uuid.uuid4()
+    user.id = myuuid
+    app.db.session.add(user)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+
+    url = "/profiles"
+
+    profile_data = {
+        'phone': '8794445768',
+        'email': 'test@email.com',
+        'linkedin_url': 'https://linkedin.com/olabayo',
+        'street': 'Street test',
+        'state_id': 1,
+        'city_id': 1,
+        'zip_code': '01903'
+    }
+
+    response = client.post(url, data=json.dumps(profile_data), headers=headers)
+    ifProfileExists = Profile.query.filter_by(user_id=myuuid).first()
+    assert bool(ifProfileExists) == True
+    assert response.json["msg"] == "profile created"
+
+
+def test_create_experience(client):  
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    user_data = {
+        'first_name': 'Olabayo',
+        'last_name': 'Onile-Ere',
+        'email': 'dehackk@yahoo.com',
+        'password': 'dehack'
+    }
+    
+    pass_hash = sha256_crypt.hash(user_data["password"])
+    user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
+    myuuid = uuid.uuid4()
+    user.id = myuuid
+    app.db.session.add(user)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+
+    url = "/experiences"
+
+    exp_data = {
+        'company': 'Org name',
+        'role': 'Role',
+        'description': 'What i did',
+        'experience_type_id': 1
+    }
+
+    response = client.post(url, data=json.dumps(exp_data), headers=headers)
+    ifExperienceExists = WorkExperience.query.filter_by(user_id=myuuid).first()
+    assert bool(ifExperienceExists) == True
+    assert response.json["msg"] == "experience created"
+
+
+def test_create_education(client):  
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    user_data = {
+        'first_name': 'Olabayo',
+        'last_name': 'Onile-Ere',
+        'email': 'dehackk@yahoo.com',
+        'password': 'dehack'
+    }
+    
+    pass_hash = sha256_crypt.hash(user_data["password"])
+    user = User(user_data["email"], pass_hash, user_data["first_name"], user_data["last_name"])
+    myuuid = uuid.uuid4()
+    user.id = myuuid
+    app.db.session.add(user)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+
+    url = "/education"
+
+    education_data = {
+        'institution': 'Org name',
+        'date_from': '05/06/2009',
+        'date_to': '05/06/2020',
+        'award': 'Certificate',
+        'education_type_id': 1,
+        'program_length': '53',
+        'industry': 'Software Engineering'
+    }
+
+    response = client.post(url, data=json.dumps(education_data), headers=headers)
+    ifEducationExists = Education.query.filter_by(user_id=myuuid).first()
+    assert bool(ifEducationExists) == True
+    assert response.json["msg"] == "education created"    

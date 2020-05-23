@@ -153,3 +153,88 @@ class City(db.Model, SerializerMixin):
 
     def __repr__(self):
         return '<City %r>' % self.city
+
+
+class Profile(db.Model):
+
+    __tablename__ = 'profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=True, nullable=False)
+    phone = db.Column(db.String(16), unique=False, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    linkedin_url = db.Column(db.String(120), unique=True, nullable=True)
+    street = db.Column(db.String(120), unique=False, nullable=False)
+    state_id = db.Column(db.Integer, nullable=False)
+    city_id = db.Column(db.Integer, nullable=False)
+    zip_code = db.Column(db.String(10), unique=False, nullable=True)
+
+    def __init__(self, user_id, phone, email, linkedin_url, street, state_id, city_id, zip_code):
+        
+        self.user_id = user_id
+        self.phone = phone
+        self.email = email
+        self.linkedin_url = linkedin_url
+        self.street = street
+        self.state_id = state_id
+        self.city_id = city_id
+        self.zip_code = zip_code
+
+
+    def __repr__(self):
+
+        return '<Profile %r>' % self.user_id
+
+class WorkExperience(db.Model):
+
+    __tablename__ = "work_experiences"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=False, nullable=False)
+    company = db.Column(db.String(120), unique=False, nullable=False)
+    role = db.Column(db.String(120), unique=False, nullable=False)
+    description = db.Column(db.String(500), unique=False, nullable=False)
+    skills = db.Column(db.String(120), unique=False, nullable=True)
+    experience_type_id = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, user_id, company, role, description, experience_type_id):
+
+        self.user_id = user_id
+        self.company = company
+        self.role = role
+        self.description = description
+        self.experience_type_id = experience_type_id
+
+    def __repr__(self):
+
+        return '<WorkExperience %r>' % self.user_id
+
+
+class Education(db.Model):
+
+    __tablename__ = "education"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=False, nullable=False)
+    institution = db.Column(db.String(120), unique=False, nullable=False)
+    date_from = db.Column(db.DateTime, nullable=False)
+    date_to = db.Column(db.DateTime, nullable=False)
+    award = db.Column(db.String(120), unique=False, nullable=False)
+    education_type_id = db.Column(db.Integer, nullable=False)
+    program_length = db.Column(db.Integer, nullable=False)
+    industry = db.Column(db.String(120), unique=False, nullable=False)
+
+    def __init__(self, user_id, institution, date_from, date_to, award, education_type_id, program_length, industry):
+
+        self.user_id = user_id
+        self.institution = institution
+        self.date_from = date_from
+        self.date_to = date_to
+        self.award = award
+        self.education_type_id = education_type_id
+        self.program_length = program_length
+        self.industry = industry
+
+    def __repr__(self):
+
+        return '<Education %r %r>' % (self.user_id, self.institution)         

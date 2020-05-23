@@ -34,7 +34,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-from .models import User, RegistrationProfile, PasswordReset, Company, CompanyUser, State, City, CompanyAddress
+from .models import User, RegistrationProfile, PasswordReset, Company, \
+CompanyUser, State, City, CompanyAddress, Profile, WorkExperience, Education
 
 def init_db():
     db.create_all()
@@ -657,4 +658,216 @@ def store_address():
         db.session.commit()
         return jsonify({"msg": "address created"}), 200 
     else:
-        return jsonify({"msg": "Bad request"}), 400        
+        return jsonify({"msg": "Bad request"}), 400
+
+
+@app.route('/profiles', methods=["POST"])
+@jwt_required()
+def store_profile():
+
+    """Endpoint for creating an profile
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            phone:
+              type: string
+              description: Phone.
+              example: 37367666666
+              required: true
+            email:
+              type: string
+              description: Email.
+              example: myemail@email.com
+              required: true
+            street:
+              type: string
+              description: Street address.
+              example: Test Street
+              required: true
+            state_id:
+              type: integer
+              description: State id.
+              example: 1
+              required: true
+            city_id:
+              type: integer
+              description: City id.
+              example: 1009
+              required: true
+            linkedin_url:
+              type: string
+              description:  Linkedin url.
+              example: https://linkedin.com/oakallll
+              required: true
+            zip_code:
+              type: string
+              description: Address zipcode.
+              example: 98937
+              required: true            
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Employer created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+
+    if 'phone' in content and  'email' in content and 'linkedin_url' in content and 'street' in content \
+        and 'state_id' in content and 'city_id' in content and 'zip_code' in content:
+        profile = Profile(current_identity.id,  content["phone"], content["email"], content["linkedin_url"], content["street"], 
+        content["state_id"], content["city_id"], content["zip_code"])
+        db.session.add(profile)
+        db.session.commit()
+        return jsonify({"msg": "profile created"}), 200
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+
+@app.route('/experiences', methods=["POST"])
+@jwt_required()
+def store_experience():
+
+    """Endpoint for creating an experience
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            company:
+              type: string
+              description: Company.
+              example: Awesome company
+              required: true
+            role:
+              type: string
+              description: Role.
+              example: Senior developer
+              required: true
+            experience_type_id:
+              type: integer
+              description: Experience type id.
+              example: 1
+              required: true           
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Experience created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+
+    if 'company' in content and  'role' in content and 'description' in content and 'experience_type_id' in content:
+        experience = WorkExperience(current_identity.id,  content["company"], content["role"], content["description"], content["experience_type_id"])
+        db.session.add(experience)
+        db.session.commit()
+        return jsonify({"msg": "experience created"}), 200
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+
+@app.route('/education', methods=["POST"])
+@jwt_required()
+def education_experience():
+
+    """Endpoint for creating an education
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            institution:
+              type: string
+              description: Institution.
+              example: Code academy
+              required: true
+            date_from:
+              type: string
+              description: Start date.
+              example: 05/12/2008
+              required: true
+            date_to:
+              type: string
+              description: End date.
+              example: 05/12/2020
+              required: true
+            award:
+              type: string
+              description: Award or certificate.
+              example: Bsc
+              required: true
+            education_type_id:
+              type: integer
+              description: Education type.
+              example: 1
+              required: true
+            program_length:
+              type: integer
+              description: Length in months.
+              example: 52
+              required: true
+            industry:
+              type: string
+              description: Industry.
+              example: Engineering
+              required: true                  
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Experience created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+
+    if 'institution' in content and  'date_from' in content and 'date_to' in content and \
+     'award' in content and 'education_type_id' in content and 'program_length' in content and 'industry' in content:
+        education = Education(current_identity.id,  content["institution"], content["date_from"], 
+        content["date_to"], content["award"], content["education_type_id"], content["program_length"], content["industry"])
+        db.session.add(education)
+        db.session.commit()
+        return jsonify({"msg": "education created"}), 200
+    else:
+        return jsonify({"msg": "bad request"}), 400              
