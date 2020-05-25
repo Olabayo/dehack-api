@@ -788,6 +788,10 @@ def store_experience():
 
     if 'company' in content and  'role' in content and 'description' in content and 'experience_type_id' in content:
         experience = WorkExperience(current_identity.id,  content["company"], content["role"], content["description"], content["experience_type_id"])
+        if 'skills' in content and content["skills"]:
+            skills = content["skills"].strip()
+            experience.skills = skills
+            experience.skills_array = skills.split(',')
         db.session.add(experience)
         db.session.commit()
         return jsonify({"msg": "experience created"}), 200
@@ -866,8 +870,49 @@ def education_experience():
      'award' in content and 'education_type_id' in content and 'program_length' in content and 'industry' in content:
         education = Education(current_identity.id,  content["institution"], content["date_from"], 
         content["date_to"], content["award"], content["education_type_id"], content["program_length"], content["industry"])
+        if 'skills' in content and content["skills"]:
+            skills = content["skills"].strip()
+            education.skills = skills
+            education.skills_array = skills.split(',')
         db.session.add(education)
         db.session.commit()
         return jsonify({"msg": "education created"}), 200
     else:
-        return jsonify({"msg": "bad request"}), 400              
+        return jsonify({"msg": "bad request"}), 400
+
+
+#/activate/<activation_key>
+#HTTP Method: GET
+@app.route('/profiles/<string:user_id>', methods=['GET'])
+@jwt_required()
+def show_profile(user_id):
+
+    profile = Profile.query.filter_by(user_id=user_id).first()
+    if bool(profile) == True:
+        return jsonify({"msg": "bad request"}), 400   
+    else:
+        return jsonify({"msg": "profile"}), 200
+
+#/activate/<activation_key>
+#HTTP Method: GET
+@app.route('/education/<string:user_id>', methods=['GET'])
+@jwt_required()
+def show_education(user_id):
+
+    education = Education.query.filter_by(user_id=user_id).all()
+    result = [{}]
+    result = [s.to_dict() for s in education]
+    return jsonify({"msg": "success", "education": result}), 200
+    
+
+
+#/activate/<activation_key>
+#HTTP Method: GET
+@app.route('/experiences/<string:user_id>', methods=['GET'])
+@jwt_required()
+def show_experience(user_id):
+
+    experiences = WorkExperience.query.filter_by(user_id=user_id).all()
+    result = [{}]
+    result = [s.to_dict() for s in experiences]
+    return jsonify({"msg": "success", "experiences": result}), 200                    

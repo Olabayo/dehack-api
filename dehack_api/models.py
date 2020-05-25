@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy_serializer import SerializerMixin
 from .app import db
+from sqlalchemy.dialects.postgresql import ARRAY
 
 class User(db.Model):
 
@@ -185,7 +186,7 @@ class Profile(db.Model):
 
         return '<Profile %r>' % self.user_id
 
-class WorkExperience(db.Model):
+class WorkExperience(db.Model, SerializerMixin):
 
     __tablename__ = "work_experiences"
 
@@ -195,6 +196,7 @@ class WorkExperience(db.Model):
     role = db.Column(db.String(120), unique=False, nullable=False)
     description = db.Column(db.String(500), unique=False, nullable=False)
     skills = db.Column(db.String(120), unique=False, nullable=True)
+    skills_array = db.Column(ARRAY(db.String), nullable=True)
     experience_type_id = db.Column(db.Integer, nullable=False)
 
     def __init__(self, user_id, company, role, description, experience_type_id):
@@ -210,7 +212,7 @@ class WorkExperience(db.Model):
         return '<WorkExperience %r>' % self.user_id
 
 
-class Education(db.Model):
+class Education(db.Model, SerializerMixin):
 
     __tablename__ = "education"
 
@@ -223,6 +225,8 @@ class Education(db.Model):
     education_type_id = db.Column(db.Integer, nullable=False)
     program_length = db.Column(db.Integer, nullable=False)
     industry = db.Column(db.String(120), unique=False, nullable=False)
+    skills = db.Column(db.String(120), unique=False, nullable=True)
+    skills_array = db.Column(ARRAY(db.String), nullable=True)
 
     def __init__(self, user_id, institution, date_from, date_to, award, education_type_id, program_length, industry):
 
