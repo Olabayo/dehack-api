@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import Flask
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
@@ -27,6 +29,7 @@ app.config['MAIL_PASSWORD'] = os.environ['FLASK_MAIL_PASSWORD']
 app.config['MAIL_DEFAULT_SENDER'] = 'youremail@email.com'
 app.config['MAIL_SUPPRESS_SEND'] = True
 app.config['SECRET_KEY'] = 'super-secret'
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=86400)
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 swagger = Swagger(app)
@@ -35,7 +38,8 @@ migrate = Migrate(app, db)
 mail = Mail(app)
 
 from .models import User, RegistrationProfile, PasswordReset, Company, \
-CompanyUser, State, City, CompanyAddress, Profile, WorkExperience, Education
+CompanyUser, State, City, CompanyAddress, Profile, WorkExperience, Education, \
+Job  
 
 def init_db():
     db.create_all()
@@ -49,8 +53,13 @@ class JwtUser(object):
 
 def default_auth_response_handler(access_token, identity):
     user = User.query.filter_by(id=identity.id).first()
+    company_id = ""
+    company = Company.query.filter_by(user_id=identity.id).first()
+    if bool(company):
+        company_id = str(company.id)
     return jsonify({'access_token': access_token.decode('utf-8'),
-                     'first_name': user.first_name, 'last_name': user.last_name})
+                     'first_name': user.first_name, 'last_name': user.last_name,
+                     'company_id': company_id})
 
 def authenticate(username, password):
 
@@ -883,21 +892,160 @@ def education_experience():
 
 #/activate/<activation_key>
 #HTTP Method: GET
-@app.route('/profiles/<string:user_id>', methods=['GET'])
+@app.route('/profiles', methods=['GET'])
 @jwt_required()
-def show_profile(user_id):
+def show_profile():
 
-    profile = Profile.query.filter_by(user_id=user_id).first()
-    if bool(profile) == True:
+    """Endpoint for retrieving user profile 
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ProfileObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          cover_story:
+            type: string
+          phone:
+            type: string
+          email:
+            type: string
+          linkedin_url:
+            type: string
+          street:
+            type: string
+          state_id:
+            type: integer
+          city_id:
+            type: integer
+          zip_code:
+            type: string           
+      ResponseProfile:
+        type: object
+        properties:
+          msg:
+            type: string
+          profile:
+            type: object
+            properties:
+               id:
+                  type: integer
+               user_id: 
+                type: string
+               cover_story:
+                  type: string
+               phone:
+                  type: string
+               email:
+                 type: string
+               linkedin_url:
+                 type: string
+               street:
+                 type: string
+               state_id:
+                 type: integer
+               city_id:
+                 type: integer
+               zip_code:
+                 type: string 
+    responses:
+      200:
+        description: Profile success
+        schema:
+          $ref: '#/definitions/ResponseProfile'
+      400:
+        description: Request error
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    profile = Profile.query.filter_by(user_id=current_identity.id).first()
+    if bool(profile) == False:
         return jsonify({"msg": "bad request"}), 400   
     else:
-        return jsonify({"msg": "profile"}), 200
+        return jsonify({"msg": "profile", "profile": profile.to_dict()}), 200
 
-#/activate/<activation_key>
+
+#/activate/<user_id>
 #HTTP Method: GET
-@app.route('/education/<string:user_id>', methods=['GET'])
+@app.route('/user/education/<string:user_id>', methods=['GET'])
 @jwt_required()
 def show_education(user_id):
+
+    """Endpoint for retrieving education rows
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      EducationObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          institution:
+            type: string
+          date_from:
+            type: string
+          date_to:
+            type: string
+          award:
+            type: string
+          education_type_id:
+            type: integer
+          program_length:
+            type: integer
+          industry:
+            type: string
+          skills:
+            type: string
+                        
+      ResponseEducation:
+        type: object
+        properties:
+          msg:
+            type: string
+          education:
+            type: array
+            items:
+               $ref: '#/definitions/EducationObj' 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseEducation'
+      400:
+        description: Request error
+        schema:
+          $ref: '#/definitions/Status'    
+    """
 
     education = Education.query.filter_by(user_id=user_id).all()
     result = [{}]
@@ -906,13 +1054,1377 @@ def show_education(user_id):
     
 
 
-#/activate/<activation_key>
+#/experiences/<user_id>
 #HTTP Method: GET
-@app.route('/experiences/<string:user_id>', methods=['GET'])
+@app.route('/user/experiences/<string:user_id>', methods=['GET'])
 @jwt_required()
 def show_experience(user_id):
+
+    """Endpoint for retrieving experience rows
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ExperienceObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          company:
+            type: string
+          role:
+            type: string
+          description:
+            type: string
+          skills:
+            type: string
+          experience_type_id:
+            type: integer              
+      ResponseExperience:
+        type: object
+        properties:
+          msg:
+            type: string
+          experience:
+            type: array
+            items:
+               $ref: '#/definitions/ExperienceObj' 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseExperience'
+      400:
+        description: Request error
+        schema:
+          $ref: '#/definitions/Status'    
+    """
 
     experiences = WorkExperience.query.filter_by(user_id=user_id).all()
     result = [{}]
     result = [s.to_dict() for s in experiences]
-    return jsonify({"msg": "success", "experiences": result}), 200                    
+    return jsonify({"msg": "success", "experiences": result}), 200
+
+@app.route('/profileoverview', methods=['GET'])
+@jwt_required()
+def show_profile_overview():
+    """Endpoint for retrieving profile overview
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ExperienceObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          company:
+            type: string
+          role:
+            type: string
+          description:
+            type: string
+          skills:
+            type: string
+          experience_type_id:
+            type: integer              
+      ResponseProfileOverview:
+        type: object
+        properties:
+          msg:
+            type: string
+          overview:
+            type: object
+            properties:
+              profile:
+               type: object
+               properties:
+                 id:
+                  type: integer
+                 user_id: 
+                   type: string 
+                 cover_story:
+                   type: string
+                 phone:
+                   type: string
+                 email:
+                   type: string
+                 linkedin_url:
+                   type: string
+                 street:
+                   type: string
+                 state_id:
+                   type: integer
+                 city_id:
+                   type: integer
+                 zip_code:
+                   type: string
+              experience:
+               type: array
+               items:
+                 $ref: '#/definitions/ExperienceObj'
+              education:
+               type: array
+               items:
+                 $ref: '#/definitions/EducationObj'   
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseProfileOverview'
+      400:
+        description: Request error
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    profile = Profile.query.filter_by(user_id=current_identity.id).first()
+    profile_to_dict = {}
+    if bool(profile):
+        profile_to_dict = profile.to_dict()
+    education_list = Education.query.filter_by(user_id=current_identity.id).all()
+    education_list_dict = [e.to_dict() for e in education_list]
+    experience_list = WorkExperience.query.filter_by(user_id=current_identity.id).all()
+    experience_list_dict = [ex.to_dict() for ex in experience_list]
+    return jsonify({"msg": "profile overview", "overview": {"profile": profile_to_dict, "education": education_list_dict,
+     "experience": experience_list_dict}}), 200
+
+
+#/activate/<id>
+#HTTP Method: GET
+@app.route('/education/<string:id>', methods=['GET'])
+@jwt_required()
+def show_education_by_id(id):
+
+    """Endpoint for retrieving education row
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      EducationObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          institution:
+            type: string
+          date_from:
+            type: string
+          date_to:
+            type: string
+          award:
+            type: string
+          education_type_id:
+            type: integer
+          program_length:
+            type: integer
+          industry:
+            type: string
+          skills:
+            type: string
+                        
+      ResponseEducationId:
+        type: object
+        properties:
+          msg:
+            type: string
+          education:
+            type: object
+            properties:
+              id:
+                type: integer
+              user_id: 
+                type: string
+              institution:
+                type: string
+              date_from:
+                type: string
+              date_to:
+               type: string
+              award:
+                type: string
+              education_type_id:
+                type: integer
+              program_length:
+                type: integer
+              industry:
+               type: string
+              skills:
+                type: string 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseEducationId'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    education = Education.query.filter_by(id=id).first()
+    if bool(education):
+        return jsonify({"msg": "success", "education": education.to_dict()}), 200   
+    else:
+        return jsonify({"msg": "not found"}), 404
+
+
+#/experiences/<id>
+#HTTP Method: GET
+@app.route('/experiences/<string:id>', methods=['GET'])
+@jwt_required()
+def show_experience_id(id):
+
+    """Endpoint for retrieving experience row
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ExperienceObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          company:
+            type: string
+          role:
+            type: string
+          description:
+            type: string
+          skills:
+            type: string
+          experience_type_id:
+            type: integer              
+      ResponseExperienceId:
+        type: object
+        properties:
+          msg:
+            type: string
+          experience:
+            type: object
+            properties:
+              id:
+                type: integer
+              user_id: 
+                type: string
+              company:
+                type: string
+              role:
+                type: string
+              description:
+                type: string
+              skills:
+                type: string
+              experience_type_id:
+                type: integer 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseExperienceId'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    experience = WorkExperience.query.filter_by(id=id).first()
+    if bool(experience):
+        return jsonify({"msg": "success", "experience": experience.to_dict()}), 200
+    else:
+        return jsonify({"msg": "not found"}), 404
+
+
+#/education/<id>
+#HTTP Method: PUT
+@app.route('/education/<string:id>', methods=["PUT"])
+@jwt_required()
+def update_education_experience(id):
+
+    """Endpoint for updating education row
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            institution:
+              type: string
+              description: Institution.
+              example: Code academy
+              required: false
+            date_from:
+              type: string
+              description: Start date.
+              example: 05/12/2008
+              required: false
+            date_to:
+              type: string
+              description: End date.
+              example: 05/12/2020
+              required: false
+            award:
+              type: string
+              description: Award or certificate.
+              example: Bsc
+              required: false
+            education_type_id:
+              type: integer
+              description: Education type.
+              example: 1
+              required: false
+            program_length:
+              type: integer
+              description: Length in months.
+              example: 52
+              required: false
+            industry:
+              type: string
+              description: Industry.
+              example: Engineering
+              required: false
+            skills:
+              type: string
+              description: Comma seperated skillsets.
+              example: php,scala,java
+              required: false  
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      EducationObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          institution:
+            type: string
+          date_from:
+            type: string
+          date_to:
+            type: string
+          award:
+            type: string
+          education_type_id:
+            type: integer
+          program_length:
+            type: integer
+          industry:
+            type: string
+          skills:
+            type: string
+                        
+      ResponseEducationId:
+        type: object
+        properties:
+          msg:
+            type: string
+          education:
+            type: object
+            properties:
+              id:
+                type: integer
+              user_id: 
+                type: string
+              institution:
+                type: string
+              date_from:
+                type: string
+              date_to:
+               type: string
+              award:
+                type: string
+              education_type_id:
+                type: integer
+              program_length:
+                type: integer
+              industry:
+               type: string
+              skills:
+                type: string 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseEducationId'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+    education = Education.query.filter_by(id=id).first()
+
+    if bool(education) == False:
+        return jsonify({"msg": "not found"}), 404
+
+    if 'institution' in content:
+        education.institution = content["institution"]
+    if 'date_from' in content:
+        education.institution = content["institution"]
+    if'date_to' in content:
+        education.institution = content["institution"]
+    if'award' in content: 
+        education.institution = content["institution"]
+    if 'education_type_id' in content:
+        education.institution = content["institution"]
+    if 'program_length' in content:
+        education.program_length = content["program_length"]
+    if 'industry' in content:
+        education.industry = content["industry"]
+        
+    if 'skills' in content and content["skills"]:
+        skills = content["skills"].strip()
+        education.skills = skills
+        education.skills_array = skills.split(',')
+    db.session.add(education)
+    db.session.commit()
+    return jsonify({"msg": "education updated", "education": education.to_dict()}), 200
+
+
+#/experiences/<id>
+#HTTP Method: PUT
+@app.route('/experiences/<string:id>', methods=["PUT"])
+@jwt_required()
+def update_experience(id):
+
+    """Endpoint for updating education row
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            company:
+              type: string
+              description: Company.
+              example: HubSpot
+              required: false
+            role:
+              type: string
+              description: Role.
+              example: Software Engineer
+              required: false
+            description:
+              type: string
+              description: Description.
+              example: I was responsible for deploying their summary app
+              required: false
+            skills:
+              type: string
+              description: Skills.
+              example: pp, java
+              required: false
+            experience_type_id:
+              type: integer
+              description: Experience type.
+              example: 1
+              required: false 
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string 
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseExperienceId'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+    experience = WorkExperience.query.filter_by(id=id).first()
+
+    if bool(experience) == False:
+        return jsonify({"msg": "not found"}), 404
+
+    if 'company' in content:
+        experience.company = content["company"]
+    if 'role' in content:
+        experience.role = content["role"]
+    if'description' in content:
+        experience.description = content["description"]
+    if 'experience_type_id' in content:
+        experience.experience_type_id = content["experience_type_id"]        
+    if 'skills' in content and content["skills"]:
+        skills = content["skills"].strip()
+        experience.skills = skills
+        experience.skills_array = skills.split(',')
+    db.session.add(experience)
+    db.session.commit()
+    return jsonify({"msg": "experience updated", "experience": experience.to_dict()}), 200
+
+
+#/profiles
+#HTTP Method: PUT
+@app.route('/profiles', methods=["PUT"])
+@jwt_required()
+def update_profile():
+
+    """Endpoint for updating a profile
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            phone:
+              type: string
+              description: Phone.
+              example: 37367666666
+              required: false
+            email:
+              type: string
+              description: Email.
+              example: myemail@email.com
+              required: false
+            street:
+              type: string
+              description: Street address.
+              example: Test Street
+              required: false
+            state_id:
+              type: integer
+              description: State id.
+              example: 1
+              required: false
+            city_id:
+              type: integer
+              description: City id.
+              example: 1009
+              required: false
+            linkedin_url:
+              type: string
+              description:  Linkedin url.
+              example: https://linkedin.com/oakallll
+              required: false
+            zip_code:
+              type: string
+              description: Address zipcode.
+              example: 98937
+              required: false
+            cover_story:
+              type: string
+              description: Overview of profile.
+              example: I am a team player
+              required: false             
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResponseProfileUpdate:
+        type: object
+        properties:
+          msg:
+            type: string
+          profile:
+            type: object
+            properties:
+              phone:
+                type: String
+              email: 
+                type: string
+              street:
+                type: string
+              state_id:
+                type: integer
+              city_id:
+               type: integer
+              linkedin_url:
+                type: string
+              zip_code:
+                type: string
+              cover_story:
+                type: string               
+    responses:
+      200:
+        description: Employer created
+        schema:
+          $ref: '#/definitions/ResponseProfileUpdate'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    content = request.json
+    profile = Profile.query.filter_by(user_id=current_identity.id).first()
+    if bool(profile) == False:
+        return jsonify({"msg": "not found"}), 404
+
+    if 'phone' in content:
+         profile.phone = content['phone']
+    if'email' in content:
+         profile.email = content['email']
+    if'cover_story' in content:
+         profile.cover_story = content['cover_story']     
+    if 'linkedin_url' in content:
+         profile.linkedin_url = content['linkedin_url']
+    if 'street' in content:
+         profile.street = content['street']
+    if 'state_id' in content:
+         profile.state_id = content['state_id']
+    if 'city_id' in content:
+         profile.city_id = content['city_id']
+    if 'zip_code' in content:
+         profile.zip_code = content['zip_code']
+
+    db.session.add(profile)
+    db.session.commit()
+    return jsonify({"msg": "profile updated", "profile": profile.to_dict()}), 200
+
+
+#/jobs
+#HTTP Method: POST
+@app.route('/jobs', methods=["POST"])
+@jwt_required()
+def add_job():
+
+    """Endpoint for creating a job
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            title:
+              type: string
+              description: Job title.
+              example: Software Engineer
+              required: true
+            description:
+              type: string
+              description: Job description.
+              example: Smith
+              required: true
+            requirements:
+              type: string
+              description: Requirements.
+              example: 2 years web development experience
+              required: true
+            skills:
+              type: string
+              description: Comma seperated skills
+              example: php, fullstack, jave
+              required: false           
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Employer created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    content = request.json
+    company = Company.query.filter_by(user_id=current_identity.id).first()
+    if bool(company) == False:
+        return jsonify({"msg": "bad request"}), 400
+    if 'title' in content and 'description' in content and 'requirements' in content:
+        job = Job(company_id=company.id, title=content['title'], description=content['description'], requirements=content['requirements'])
+        if 'skills' in content and content["skills"]:
+            skills = content["skills"].strip()
+            job.skills = skills
+            job.skills_array = skills.split(',')
+        db.session.add(job)
+        db.session.commit()
+        return jsonify({"msg": "job created"}), 200
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+
+#/jobs/<id>
+#HTTP Method: PUT
+@app.route('/jobs/<string:id>', methods=["PUT"])
+@jwt_required()
+def update_job(id):
+
+    """Endpoint for updating a job
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: id
+        in: path
+        type: string
+        required: true  
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            title:
+              type: string
+              description: Job title.
+              example: Software Engineer
+              required: false
+            description:
+              type: string
+              description: Job description.
+              example: Smith
+              required: false
+            requirements:
+              type: string
+              description: Requirements.
+              example: 2 years web development experience
+              required: false
+            skills:
+              type: string
+              description: Comma seperated skills
+              example: php, fullstack, jave
+              required: false            
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResponseJob:
+        type: object
+        properties:
+          msg:
+            type: string
+          job:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              requirements:
+                type: string
+              skills:
+                type: string    
+    responses:
+      200:
+        description: Job updated
+        schema:
+          $ref: '#/definitions/ResponseJob'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    content = request.json
+    job = Job.query.filter_by(id=id).first()
+    if bool(job) == True:
+        company = Company.query.filter_by(user_id=current_identity.id, id=job.company_id)
+        if bool(company) == False:
+            return jsonify({"msg": "bad request"}), 400
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+    if 'title' in content: 
+        job.title = content['title']
+    if 'description' in content: 
+        job.description = content['description']
+    if 'requirements' in content:
+        job.requirements = content['requirements']
+    if 'skills' in content and content["skills"]:
+        skills = content["skills"].strip()
+        job.skills = skills
+        job.skills_array = skills.split(',')     
+       
+    db.session.add(job)
+    db.session.commit()
+    return jsonify({"msg": "job created", "job": job.to_dict()}), 200
+
+
+#/companies/<id>
+#HTTP Method: PUT
+@app.route('/companies/<string:id>', methods=["GET"])
+@jwt_required()
+def get_company(id):
+
+  """Endpoint for updating a job
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: id
+        in: path
+        type: string
+        required: true              
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResponseCompany:
+        type: object
+        properties:
+          msg:
+            type: string
+          company:
+            type: object
+            properties:
+              id:
+                type: string
+              user_id:
+                type: string
+              name:
+                type: string
+              phone:
+                type: string
+              email:
+                type: string    
+    responses:
+      200:
+        description: Employer created
+        schema:
+          $ref: '#/definitions/ResponseCompany'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+  company = Company.query.filter_by(user_id=current_identity.id, id=id).first()
+  if bool(company) == True:
+      return jsonify({"msg": "company result", "company": company.to_dict()}), 200
+  else:
+      return jsonify({"msg": "not found"}), 404
+
+
+#/jobs?c=10&p=1
+#/jobs
+# HTTP METHOD GET
+@app.route("/jobs", methods=['get'])  
+@jwt_required()
+def list_job():
+
+    """Endpoint for retrieving jobs
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: c
+        in: query
+        type: integer
+        required: true
+        description: Number of jobs returned
+      - name: p
+        in: query
+        type: integer
+        required: true 
+        description: The offset used to traverse the list of jobs               
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      Job:
+        type: object
+        properties:
+          id:
+            type: integer
+          title:
+            type: string
+          description:
+            type: string
+          requirements:
+            type: string
+          company_id:
+            type: string
+          skills:
+            type: string        
+      ResponseJobList:
+        type: object
+        properties:
+          msg:
+            type: string
+          next:
+            type: string
+          prev:
+            type: string    
+          jobs:
+            type: array
+            items:
+              $ref: '#/definitions/Job'  
+    responses:
+      200:
+        description: Job listed
+        schema:
+          $ref: '#/definitions/ResponseJobList'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    company = Company.query.filter_by(user_id=current_identity.id).first()
+    if bool(company) == True:
+        jobs_query = Job.query.filter_by(company_id=company.id)
+        # to do
+        job_count = jobs_query.count()
+        next = None
+        prev = None
+        c = 10
+        p = 1
+        try:
+            c = int(request.args.get('c'))
+            p = int(request.args.get('p'))
+        except Exception:
+            return jsonify({"msg": "Invalid page params"}), 400
+        if p > 1:
+            check_prev = p - 1
+            if job_count >= c * check_prev:
+                prev = request.base_url + "?c=" + str(c) + "&p=" + str(check_prev)
+        check_next = p + 1  
+        if job_count >= c * check_next:
+            next = request.base_url + "?c=" + str(c) + "&p=" + str(check_next)
+        try:
+            job_list = jobs_query.order_by(Job.id.asc()).paginate(p, per_page=c).items
+            result = [d.to_dict() for d in job_list]
+            return jsonify(msg="jobs result", jobs=result, next = next, prev = prev)      
+        except Exception:
+            return jsonify({"msg": "Pagination error"}), 400
+    else:
+        return jsonify({"msg": "not found"}), 404
+
+
+#/jobs?c=10&p=1
+#/jobs
+# HTTP METHOD GET
+@app.route("/browse/jobs", methods=['get'])  
+def browse_job():
+
+    """Endpoint for retrieving jobs
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: c
+        in: query
+        type: integer
+        required: true
+        description: Number of jobs returned
+      - name: p
+        in: query
+        type: integer
+        required: true 
+        description: The offset used to traverse the list of jobs               
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      Job:
+        type: object
+        properties:
+          id:
+            type: integer
+          title:
+            type: string
+          description:
+            type: string
+          requirements:
+            type: string
+          company_id:
+            type: string
+          skills:
+            type: string        
+      ResponseJobList:
+        type: object
+        properties:
+          msg:
+            type: string
+          next:
+            type: string
+          prev:
+            type: string    
+          jobs:
+            type: array
+            items:
+              $ref: '#/definitions/Job'  
+    responses:
+      200:
+        description: Job listed
+        schema:
+          $ref: '#/definitions/ResponseJobList'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    jobs_query = Job.query
+    # to do
+    job_count = jobs_query.count()
+    next = None
+    prev = None
+    c = 10
+    p = 1
+    try:
+        c = int(request.args.get('c'))
+        p = int(request.args.get('p'))
+    except Exception:
+        return jsonify({"msg": "Invalid page params"}), 400
+    if p > 1:
+        check_prev = p - 1
+        if job_count >= c * check_prev:
+            prev = request.base_url + "?c=" + str(c) + "&p=" + str(check_prev)
+    check_next = p + 1  
+    if job_count >= c * check_next:
+        next = request.base_url + "?c=" + str(c) + "&p=" + str(check_next)
+    try:
+        job_list = jobs_query.order_by(Job.id.asc()).paginate(p, per_page=c).items
+        result = [d.to_dict() for d in job_list]
+        return jsonify(msg="jobs result", jobs=result, next = next, prev = prev)      
+    except Exception:
+        return jsonify({"msg": "Pagination error"}), 400        
+
+
+#/jobs/<id>
+#HTTP Method: GET
+@app.route('/jobs/<string:id>', methods=["GET"])
+@jwt_required()
+def show_job(id):
+
+    """Endpoint for updating a job
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: id
+        in: path
+        type: string
+        required: true         
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResponseJob:
+        type: object
+        properties:
+          msg:
+            type: string
+          job:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              requirements:
+                type: string
+              skills:
+                type: string    
+    responses:
+      200:
+        description: job retrived
+        schema:
+          $ref: '#/definitions/ResponseJob'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'
+    """
+    job = Job.query.filter_by(id=id).first()
+    if bool(job) == True:
+        return jsonify({"msg": "job created", "job": job.to_dict()}), 200 
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+
+#/jobs/<id>
+#HTTP Method: GET
+@app.route('/guestjobs/<string:id>', methods=["GET"])
+def show_guest_job(id):
+
+    """Endpoint for updating a job
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: string
+        required: true         
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResponseJob:
+        type: object
+        properties:
+          msg:
+            type: string
+          job:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              requirements:
+                type: string
+              skills:
+                type: string    
+    responses:
+      200:
+        description: job retrived
+        schema:
+          $ref: '#/definitions/ResponseJob'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'
+    """
+    job = Job.query.filter_by(id=id).first()
+    if bool(job) == True:
+        return jsonify({"msg": "job created", "job": job.to_dict()}), 200 
+    else:
+        return jsonify({"msg": "bad request"}), 400
+
+
+
+@app.route("/browse/resumes", methods=['get'])
+@jwt_required()
+def browse_resume():
+
+    """Endpoint for retrieving resumes/profiles
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: c
+        in: query
+        type: integer
+        required: true
+        description: Number of resumes returned
+      - name: p
+        in: query
+        type: integer
+        required: true   
+        description: The offset used to traverse the list of jobs       
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ResumeUser:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id:
+            type: string
+          cover_story:
+            type: string
+          phone:
+            type: string
+          email:
+            type: string 
+          linkedin_url:
+            type: string
+          street:
+            type: string
+          state_id:
+            type: integer
+          city_id:
+            type: integer
+          zip_code:
+            type: string
+          user:
+            type: object
+            properties:
+              id:
+                type: string
+              email:
+                type: string
+              first_name:
+                type: string
+              last_name:
+                type: string      
+      ResponseResume:
+        type: object
+        properties:
+          msg:
+            type: string
+          resumes:
+            type: array
+            items:
+              $ref: '#/definitions/ResumeUser'
+                                
+    responses:
+      200:
+        description: job retrived
+        schema:
+          $ref: '#/definitions/ResponseResume'
+      400:
+        description: bad request
+        schema:
+          $ref: '#/definitions/Status'    
+      403:
+        description: forbidden request
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    # Ensure user is a employer
+    company = Company.query.filter_by(user_id=current_identity.id).first()
+    if bool(company) == False:
+        return jsonify({"msg": "unforbidden request"}), 403
+
+    resumes_query = Profile.query
+    # to do
+    resume_count = resumes_query.count()
+    next = None
+    prev = None
+    c = 10
+    p = 1
+    try:
+        c = int(request.args.get('c'))
+        p = int(request.args.get('p'))
+    except Exception:
+        return jsonify({"msg": "Invalid page params"}), 400
+    if p > 1:
+        check_prev = p - 1
+        if resume_count >= c * check_prev:
+            prev = request.base_url + "?c=" + str(c) + "&p=" + str(check_prev)
+    check_next = p + 1  
+    if resume_count >= c * check_next:
+        next = request.base_url + "?c=" + str(c) + "&p=" + str(check_next)
+    try:
+        resumes_list = resumes_query.order_by(Profile.id.asc()).paginate(p, per_page=c).items
+        result = [r.to_dict() for r in resumes_list]
+        return jsonify(msg="jobs result", resumes=result, next = next, prev = prev)      
+    except Exception:
+        return jsonify({"msg": "Pagination error"}), 400

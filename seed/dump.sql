@@ -449,7 +449,7 @@ ALTER TABLE ONLY public.work_experiences ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-1d9d8d03bc58
+96588ae9ac8d
 \.
 
 
@@ -30346,6 +30346,7 @@ COPY public.cities (id, state_id, city, county, latitude, longitude) FROM stdin;
 --
 
 COPY public.companies (id, user_id, name, phone, email) FROM stdin;
+8df6d407-db68-48d1-be41-fbde68709d5e	2da6144e-2f13-47a8-892a-105c5e008031	Cool Company	8574563456	coolcompany@email.com
 \.
 
 
@@ -30362,6 +30363,7 @@ COPY public.company_addresses (id, company_id, street, state_id, city_id, zip_co
 --
 
 COPY public.company_users (id, user_id, company_id, role) FROM stdin;
+1	2da6144e-2f13-47a8-892a-105c5e008031	8df6d407-db68-48d1-be41-fbde68709d5e	1
 \.
 
 
@@ -30370,6 +30372,7 @@ COPY public.company_users (id, user_id, company_id, role) FROM stdin;
 --
 
 COPY public.education (id, user_id, institution, date_from, date_to, award, education_type_id, program_length, industry, skills, skills_array) FROM stdin;
+1	3476daa2-341f-42da-ac73-03f8f99f7b39	Hack Reactors	2019-01-12 00:00:00	2019-07-12 00:00:00	Fullstack Engineer Certificate of Completion 	1	6	Software Engineering	fullstack developer, devops, java, sql	{"fullstack developer"," devops"," java"," sql"}
 \.
 
 
@@ -30378,6 +30381,7 @@ COPY public.education (id, user_id, institution, date_from, date_to, award, educ
 --
 
 COPY public.jobs (id, company_id, title, description, requirements, skills, skills_array, created_at) FROM stdin;
+1	8df6d407-db68-48d1-be41-fbde68709d5e	Android Developer II	You will be responsible for adding new features to our native android eCommerce application.	At least one app on the play stay\nPassion for building software\nSelf starter	TDD, Kotlin, Java, Android Api	{TDD," Kotlin"," Java"," Android Api"}	2020-05-29 13:11:37.283357
 \.
 
 
@@ -30394,6 +30398,7 @@ COPY public.password_reset (id, email, reset_key, used, created_at) FROM stdin;
 --
 
 COPY public.profiles (id, user_id, cover_story, phone, email, linkedin_url, street, state_id, city_id, zip_code) FROM stdin;
+1	3476daa2-341f-42da-ac73-03f8f99f7b39	I am a great team player and very hardworking	8572224685	olabayo966@yahoo.com	https://linkedin.com/0olaobayo	Test Streets	1	1009	01657
 \.
 
 
@@ -30403,6 +30408,8 @@ COPY public.profiles (id, user_id, cover_story, phone, email, linkedin_url, stre
 
 COPY public.registration_profile (user_id, activation_key, used) FROM stdin;
 d33a2718-afe3-42ff-a1c2-0ea977de1759	5a6dce72-f9cc-4547-90d6-f538c549685e	t
+3476daa2-341f-42da-ac73-03f8f99f7b39	2c3a7f25-d1f2-40f7-abee-69ee79f8b582	f
+2da6144e-2f13-47a8-892a-105c5e008031	c6b06480-ba1b-4183-a4a1-0f63943789e9	f
 \.
 
 
@@ -30472,6 +30479,8 @@ COPY public.states (id, state_code, state_name) FROM stdin;
 
 COPY public.users (id, email, password, first_name, last_name, status, created_at) FROM stdin;
 d33a2718-afe3-42ff-a1c2-0ea977de1759	dehack@yahoo.com	$5$rounds=535000$bJ2SnJ2VoD9Hop9M$xEK6uQIbqO0X47P0UOGGQCtBtMaFsmRG897jZuUSCjD	Dehack	Dehack	t	2020-05-25 16:41:05.094744
+2da6144e-2f13-47a8-892a-105c5e008031	dehack3@yahoo.com	$5$rounds=535000$QrrmkYWuQDMl2DWi$M72zNLf4ESPzhs1dUxny5FiLGnUzMadRTrvqL6MqXj.	Ayodeji	Bambam	f	2020-05-26 14:36:38.353133
+3476daa2-341f-42da-ac73-03f8f99f7b39	dehack2@yahoo.com	$5$rounds=535000$Tf8yCkRknUBavgQw$7oaKBiLUwO7W8KimrudN18NWhQJj8S2QDKX0YxvU55C	Olabayo	Onile-Ere	f	2020-05-26 05:12:33.205621
 \.
 
 
@@ -30480,6 +30489,7 @@ d33a2718-afe3-42ff-a1c2-0ea977de1759	dehack@yahoo.com	$5$rounds=535000$bJ2SnJ2Vo
 --
 
 COPY public.work_experiences (id, user_id, company, role, description, skills, skills_array, experience_type_id) FROM stdin;
+1	3476daa2-341f-42da-ac73-03f8f99f7b39	HubSpots	Software Engineer Intern	I was responsible for implementing the summary app web application, this entailed a robust api and database setup.	fullstack developer, devops, java, sql	{"fullstack developer"," devops"," java"," sql"}	1
 \.
 
 
@@ -30501,21 +30511,21 @@ SELECT pg_catalog.setval('public.company_addresses_id_seq', 1, false);
 -- Name: company_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.company_users_id_seq', 1, false);
+SELECT pg_catalog.setval('public.company_users_id_seq', 1, true);
 
 
 --
 -- Name: education_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.education_id_seq', 1, false);
+SELECT pg_catalog.setval('public.education_id_seq', 1, true);
 
 
 --
 -- Name: jobs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.jobs_id_seq', 1, false);
+SELECT pg_catalog.setval('public.jobs_id_seq', 1, true);
 
 
 --
@@ -30529,7 +30539,7 @@ SELECT pg_catalog.setval('public.password_reset_id_seq', 1, false);
 -- Name: profiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.profiles_id_seq', 1, false);
+SELECT pg_catalog.setval('public.profiles_id_seq', 1, true);
 
 
 --
@@ -30543,7 +30553,7 @@ SELECT pg_catalog.setval('public.states_id_seq', 1, false);
 -- Name: work_experiences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.work_experiences_id_seq', 1, false);
+SELECT pg_catalog.setval('public.work_experiences_id_seq', 1, true);
 
 
 --
@@ -30568,6 +30578,14 @@ ALTER TABLE ONLY public.cities
 
 ALTER TABLE ONLY public.companies
     ADD CONSTRAINT companies_email_key UNIQUE (email);
+
+
+--
+-- Name: companies companies_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.companies
+    ADD CONSTRAINT companies_id_key UNIQUE (id);
 
 
 --
@@ -30627,14 +30645,6 @@ ALTER TABLE ONLY public.education
 
 
 --
--- Name: jobs jobs_company_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.jobs
-    ADD CONSTRAINT jobs_company_id_key UNIQUE (company_id);
-
-
---
 -- Name: jobs jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -30691,6 +30701,14 @@ ALTER TABLE ONLY public.profiles
 
 
 --
+-- Name: registration_profile registration_profile_activation_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.registration_profile
+    ADD CONSTRAINT registration_profile_activation_key_key UNIQUE (activation_key);
+
+
+--
 -- Name: registration_profile registration_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -30720,6 +30738,14 @@ ALTER TABLE ONLY public.states
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_id_key UNIQUE (id);
 
 
 --

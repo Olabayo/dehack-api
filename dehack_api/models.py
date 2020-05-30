@@ -7,7 +7,11 @@ from sqlalchemy_serializer import SerializerMixin
 from .app import db
 from sqlalchemy.dialects.postgresql import ARRAY
 
-class User(db.Model):
+
+def serialize_uuid(value):
+    return str(value)
+
+class User(db.Model, SerializerMixin):
 
     __tablename__ = 'users'
     
@@ -61,9 +65,13 @@ class PasswordReset(db.Model):
         return '<PasswordReset %r>' % self.email
 
 
-class Company(db.Model):
+class Company(db.Model, SerializerMixin):
 
     __tablename__ = 'companies'
+
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
     
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=True, nullable=False)
@@ -156,9 +164,13 @@ class City(db.Model, SerializerMixin):
         return '<City %r>' % self.city
 
 
-class Profile(db.Model):
+class Profile(db.Model, SerializerMixin):
 
     __tablename__ = 'profiles'
+
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=True, nullable=False)
@@ -169,6 +181,7 @@ class Profile(db.Model):
     state_id = db.Column(db.Integer, nullable=False)
     city_id = db.Column(db.Integer, nullable=False)
     zip_code = db.Column(db.String(10), unique=False, nullable=True)
+    user = db.relationship('User', foreign_keys=[user_id], primaryjoin='User.id == Profile.user_id')
 
     def __init__(self, user_id, phone, email, linkedin_url, street, state_id, city_id, zip_code):
         
@@ -189,6 +202,10 @@ class Profile(db.Model):
 class WorkExperience(db.Model, SerializerMixin):
 
     __tablename__ = "work_experiences"
+
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=False, nullable=False)
@@ -216,6 +233,10 @@ class Education(db.Model, SerializerMixin):
 
     __tablename__ = "education"
 
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=False, nullable=False)
     institution = db.Column(db.String(120), unique=False, nullable=False)
@@ -241,4 +262,34 @@ class Education(db.Model, SerializerMixin):
 
     def __repr__(self):
 
-        return '<Education %r %r>' % (self.user_id, self.institution)         
+        return '<Education %r %r>' % (self.user_id, self.institution)
+
+
+class Job(db.Model, SerializerMixin):
+
+    __tablename__ = "jobs"
+
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=False, nullable=False) 
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(500), unique=False, nullable=False)
+    requirements = db.Column(db.String(500), nullable=False)
+    skills = db.Column(db.String(120), unique=False, nullable=True)
+    skills_array = db.Column(ARRAY(db.String), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    company = db.relationship('Company', foreign_keys=[company_id], primaryjoin='Company.id == Job.company_id')
+
+    def __init__(self, company_id, title, description, requirements):
+
+        self.company_id = company_id
+        self.title = title
+        self.description = description
+        self.requirements = requirements
+
+    def __repr__(self):
+
+        return '<Job %r>' % self.title               
