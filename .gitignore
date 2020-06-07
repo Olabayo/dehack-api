@@ -128,3 +128,6 @@ venv.bak/
 pip-selfcheck.json
 
 # End of https://www.gitignore.io/api/code,python,virtualenv
+
+# flask stuff
+**/migrations/
