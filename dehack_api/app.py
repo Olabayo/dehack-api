@@ -1,4 +1,5 @@
 from datetime import timedelta
+import math
 
 from flask import Flask
 from flask import request
@@ -2105,7 +2106,7 @@ def list_job():
         return jsonify({"msg": "not found"}), 404
 
 
-#/jobs?c=10&p=1
+#/jobs?c=10&p=1&q=software
 #/jobs
 # HTTP METHOD GET
 @app.route("/browse/jobs", methods=['get'])  
@@ -2124,7 +2125,12 @@ def browse_job():
         in: query
         type: integer
         required: true 
-        description: The offset used to traverse the list of jobs               
+        description: The offset used to traverse the list of jobs
+      - name: q
+        in: query
+        type: string
+        required: false
+        description: paramater for filtering on job name             
     definitions:
       Status:
         type: object
@@ -2169,9 +2175,11 @@ def browse_job():
         schema:
           $ref: '#/definitions/Status'
     """
-
     jobs_query = Job.query
+    if 'q' in request.args and request.args.get('q') != "":
+        jobs_query = jobs_query.filter(Job.title.like('%' + request.args.get('q') + '%'))
     # to do
+    page_count = 0
     job_count = jobs_query.count()
     next = None
     prev = None
@@ -2180,6 +2188,8 @@ def browse_job():
     try:
         c = int(request.args.get('c'))
         p = int(request.args.get('p'))
+        if job_count > 0:
+            page_count = math.ceil(job_count/c)
     except Exception:
         return jsonify({"msg": "Invalid page params"}), 400
     if p > 1:
@@ -2192,7 +2202,8 @@ def browse_job():
     try:
         job_list = jobs_query.order_by(Job.id.asc()).paginate(p, per_page=c).items
         result = [d.to_dict() for d in job_list]
-        return jsonify(msg="jobs result", jobs=result, next = next, prev = prev)      
+        return jsonify(msg="jobs result", jobs=result, next = next, 
+                      prev = prev, page_count=page_count, count=job_count)      
     except Exception:
         return jsonify({"msg": "Pagination error"}), 400        
 

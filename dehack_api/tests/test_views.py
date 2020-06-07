@@ -10,10 +10,13 @@ from passlib.hash import sha256_crypt
 
 from .. import app
 from ..models import User, RegistrationProfile, PasswordReset, Company, CompanyAddress, CompanyUser, \
-State, City, Profile, Education, WorkExperience
+State, City, Profile, Education, WorkExperience, Job
 
 from datetime import datetime, timedelta
 import uuid
+
+from .factory_model import UserFactory, EducationFactory, ExperienceFactory, ProfileFactory, \
+CompanyFactory, CompanyAddressFactory, JobFactory
 
 
 CONFIG_DEFAULTS = {
