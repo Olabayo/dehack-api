@@ -2208,6 +2208,70 @@ def browse_job():
         return jsonify({"msg": "Pagination error"}), 400        
 
 
+
+#/jobs?c=10&p=1&q=software
+#/jobs
+# HTTP METHOD GET
+@app.route("/search/jobs", methods=['get'])  
+def search_job():
+
+    """Endpoint for retrieving unique job titles
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: c
+        in: query
+        type: integer
+        required: true
+        description: Number of unique job titles to return             
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      JobUnique:
+        type: object
+        properties:
+          title:
+            type: string        
+      ResponseJobListUnique:
+        type: object
+        properties:
+          msg:
+            type: string
+          count:
+            type: integer   
+          jobs:
+            type: array
+            items:
+              $ref: '#/definitions/JobUnique'  
+    responses:
+      200:
+        description: Job title listed
+        schema:
+          $ref: '#/definitions/ResponseJobListUnique'
+      404:
+        description: Not found
+        schema:
+          $ref: '#/definitions/Status'
+    """  
+    c = 10
+    try:
+        c = int(request.args.get('c'))
+    except Exception:
+        return jsonify({"msg": "Invalid page params"}), 400    
+    try:
+        job_query = Job.query.with_entities(Job.title).distinct().filter(Job.title.ilike('%' + request.args.get('q') + '%')) 
+        job_count = job_query.count()
+        job_list = job_query.limit(c)
+        result = [{"title": d.title} for d in job_list] 
+        return jsonify(msg="jobs result", jobs=result, count=job_count)      
+    except Exception:
+        return jsonify({"msg": "request error"}), 400
+
+
+
 #/jobs/<id>
 #HTTP Method: GET
 @app.route('/jobs/<string:id>', methods=["GET"])

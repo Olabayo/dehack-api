@@ -519,4 +519,926 @@ def test_create_education(client):
     response = client.post(url, data=json.dumps(education_data), headers=headers)
     ifEducationExists = Education.query.filter_by(user_id=myuuid).first()
     assert bool(ifEducationExists) == True
-    assert response.json["msg"] == "education created"    
+    assert response.json["msg"] == "education created"
+
+
+def test_get_profile(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+    
+    
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid)
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid)
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = "/profiles"
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+
+
+def test_get_education(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+    
+    
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    experience = ExperienceFactory(user_id=myuuid)
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid)
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = "/user/education/" + str(myuuid)
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+
+
+def test_get_experience(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+    
+    
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    experience = ExperienceFactory(user_id=myuuid)
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid)
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = "/user/experiences/" + str(myuuid)
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8') #response.json["access_token"]
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+
+
+def test_profile_overview(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid)
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid)
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/profileoverview'   
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+    assert bool("overview" in response.json) == True
+    assert len(response.json["overview"]["experience"]) == 2
+    assert response.json["overview"]["profile"]["email"] == "test@email.com"
+
+
+def test_get_education_id(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid)
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid, institution="Hack Reactor")
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/education/1'
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+    assert response.json["education"]["institution"] == "Hack Reactor"
+
+
+def test_get_experience_id(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid, company="HubSpot")
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid, institution="Hack Reactor")
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/experiences/1'
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+    assert response.status_code == 200
+    assert response.json["experience"]["company"] == "HubSpot"
+
+
+def test_update_education_id(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid, company="HubSpot")
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid, institution="Hack Reactor")
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/education/1'
+
+    data = {
+        'institution' : 'Udacity'
+    }
+
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.put(url, data=json.dumps(data), headers = headers)
+    assert response.status_code == 200
+    assert response.json["education"]["institution"] == "Udacity"
+
+
+def test_update_experience_id(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid, company="HubSpot")
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid, institution="Hack Reactor")
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/experiences/1'
+
+    data = {
+        'company' : 'Microsoft'
+    }
+
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.put(url, data=json.dumps(data), headers = headers)
+    assert response.status_code == 200
+    assert response.json["experience"]["company"] == "Microsoft"
+
+
+
+def test_update_profile(client):
+
+    mimetype = 'application/json'
+
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid)
+    experience = ExperienceFactory(user_id=myuuid, company="HubSpot")
+    #experience.user_id = myuuid
+    experience2 = ExperienceFactory(user_id=myuuid)
+    #experience2.user_id = myuuid
+    education = EducationFactory(user_id=myuuid, institution="Hack Reactor")
+    #education.user_id = myuuid
+    education2 = EducationFactory(user_id=myuuid)
+    #education2.user_id = myuuid
+    app.db.session.add(user)
+    app.db.session.add(profile)
+    app.db.session.add(education)
+    app.db.session.add(experience)
+    app.db.session.add(education2)
+    app.db.session.add(experience2)
+    app.db.session.commit()
+
+    url = '/profiles'
+
+    data = {
+        'zip_code' : '00000'
+    }
+
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.put(url, data=json.dumps(data), headers = headers)
+    assert response.status_code == 200
+    assert response.json["profile"]["zip_code"] == "00000"
+
+
+def test_create_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    url = "/jobs"
+    data = {
+        'title': 'Fullstack Engineer',
+        'description': 'This role is in need of a fullstack engineer',
+        'requirements': 'Ability to think through problems, and relevant projects or personal side projects',
+        'skills': 'php,java,devops'
+    }
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id = myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id = myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.post(url, data=json.dumps(data), headers = headers)
+
+    assert response.status_code == 200
+
+
+def test_update_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    url = "/jobs"
+    data = {
+        'title': 'Backend Engineer'
+    }
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/jobs/1"  
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.put(url, data=json.dumps(data), headers = headers)
+
+    assert response.status_code == 200
+    assert response.json["job"]["title"] == "Backend Engineer" 
+
+
+def test_get_company(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.commit()
+
+    url = "/companies/" + str(myuuid_company) 
+
+    access_token = gen_key({'id': str(myuuid)})  
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+
+    assert response.status_code == 200
+    assert response.json["company"]["name"] == "Cool company"
+
+
+def test_get_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/jobs?c=10&p=1"  
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+
+    assert response.status_code == 200
+    assert len(response.json["jobs"]) == 2
+
+
+def test_show_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/jobs/1"  
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+
+    assert response.status_code == 200
+    assert response.json["job"]["title"] == "Software Engineer"
+
+
+def test_show_guest_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/guestjobs/1"  
+
+    response = client.get(url, headers = headers)
+
+    assert response.status_code == 200
+    assert response.json["job"]["title"] == "Software Engineer"    
+
+
+def test_browse_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company, title="Clojure developer")
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    job3 = JobFactory(company_id=myuuid_company, title="IOS developer")
+    job4 = JobFactory(company_id=myuuid_company, title="Java Developer")
+    job5 = JobFactory(company_id=myuuid_company, title="Elixir developer")
+    job6 = JobFactory(company_id=myuuid_company, title="Kotlin developer")
+    job7 = JobFactory(company_id=myuuid_company, title="Python developer")
+    job8 = JobFactory(company_id=myuuid_company, title="Php developer")
+    job9 = JobFactory(company_id=myuuid_company, title="Reactjs developer")
+    job10 = JobFactory(company_id=myuuid_company, title="React Ntive developer")
+    job11 = JobFactory(company_id=myuuid_company, title="NET developer")
+    job12 = JobFactory(company_id=myuuid_company, title="Xamarin developer")
+    job13 = JobFactory(company_id=myuuid_company, title="Android developer II")
+    job14 = JobFactory(company_id=myuuid_company, title="Devops Engineer")
+    job15 = JobFactory(company_id=myuuid_company, title="Wordpress developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.add(job3)
+    app.db.session.add(job4)
+    app.db.session.add(job5)
+    app.db.session.add(job6)
+    app.db.session.add(job7)
+    app.db.session.add(job8)
+    app.db.session.add(job9)
+    app.db.session.add(job10)
+    app.db.session.add(job11)
+    app.db.session.add(job12)
+    app.db.session.add(job13)
+    app.db.session.add(job14)
+    app.db.session.add(job15)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/browse/jobs?c=10&p=1"  
+    #headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    assert len(response.json["jobs"]) == 10
+
+
+def test_get_resumes(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid2 = uuid.uuid4()
+    myuuid3 = uuid.uuid4()
+    myuuid4 = uuid.uuid4()
+    myuuid5 = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash, email="user@yahoo.com")
+    user.id = myuuid
+    profile = ProfileFactory(user_id=myuuid, email="user@yahoo.com")
+    user2 = UserFactory(password=pass_hash, email="user2@yahoo.com")
+    user2.id = myuuid2
+    profile2 = ProfileFactory(user_id=myuuid2, email="user2@yahoo.com", linkedin_url="https://linkedin.com/247weolaa")
+    user3 = UserFactory(password=pass_hash, email="user3@yahoo.com")
+    user3.id = myuuid3
+    profile3 = ProfileFactory(user_id=myuuid3, email="user3@yahoo.com", linkedin_url="https://linkedin.com/347weolaa")
+    user4 = UserFactory(password=pass_hash, email="user4@yahoo.com")
+    user4.id = myuuid4
+    profile4 = ProfileFactory(user_id=myuuid4, email="user4@yahoo.com", linkedin_url="https://linkedin.com/447weolaa")
+    user5 = UserFactory(password=pass_hash, email="user5@yahoo.com")
+    user5.id = myuuid5
+    profile5 = ProfileFactory(user_id=myuuid5, email="user5@yahoo.com", linkedin_url="https://linkedin.com/547weolaa")
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company)
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    app.db.session.add(user)
+    app.db.session.add(user2)
+    app.db.session.add(user3)
+    app.db.session.add(user4)
+    app.db.session.add(user5)
+    #app.db.session.add(profile)
+    app.db.session.add(profile2)
+    app.db.session.add(profile3)
+    app.db.session.add(profile4)
+    app.db.session.add(profile5)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/browse/resumes?c=10&p=1"  
+    headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers = headers)
+
+    assert response.status_code == 200
+    assert len(response.json["resumes"]) == 4
+
+
+
+def test_search_browse_job(client):
+
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company, title="Clojure developer")
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    job3 = JobFactory(company_id=myuuid_company, title="IOS developer")
+    job4 = JobFactory(company_id=myuuid_company, title="Java Developer")
+    job5 = JobFactory(company_id=myuuid_company, title="Elixir developer")
+    job6 = JobFactory(company_id=myuuid_company, title="Kotlin developer")
+    job7 = JobFactory(company_id=myuuid_company, title="Python developer")
+    job8 = JobFactory(company_id=myuuid_company, title="Php developer")
+    job9 = JobFactory(company_id=myuuid_company, title="Reactjs developer")
+    job10 = JobFactory(company_id=myuuid_company, title="React Native developer")
+    job11 = JobFactory(company_id=myuuid_company, title="NET developer")
+    job12 = JobFactory(company_id=myuuid_company, title="Xamarin developer")
+    job13 = JobFactory(company_id=myuuid_company, title="Android developer II")
+    job14 = JobFactory(company_id=myuuid_company, title="Devops Engineer")
+    job15 = JobFactory(company_id=myuuid_company, title="Wordpress developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.add(job3)
+    app.db.session.add(job4)
+    app.db.session.add(job5)
+    app.db.session.add(job6)
+    app.db.session.add(job7)
+    app.db.session.add(job8)
+    app.db.session.add(job9)
+    app.db.session.add(job10)
+    app.db.session.add(job11)
+    app.db.session.add(job12)
+    app.db.session.add(job13)
+    app.db.session.add(job14)
+    app.db.session.add(job15)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = "/browse/jobs?c=10&p=1&q=developer"  
+    #headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    assert len(response.json["jobs"]) == 10
+    assert response.json["page_count"] == 2
+
+# merging encoded and case insensitivity test
+def test_search_browse_encoded_job(client):
+    
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company, title="Clojure developer")
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    job3 = JobFactory(company_id=myuuid_company, title="IOS developer")
+    job4 = JobFactory(company_id=myuuid_company, title="Java Developer")
+    job5 = JobFactory(company_id=myuuid_company, title="Elixir developer")
+    job6 = JobFactory(company_id=myuuid_company, title="Kotlin developer")
+    job7 = JobFactory(company_id=myuuid_company, title="Python developer")
+    job8 = JobFactory(company_id=myuuid_company, title="Php developer")
+    job9 = JobFactory(company_id=myuuid_company, title="Reactjs developer")
+    job10 = JobFactory(company_id=myuuid_company, title="React Native developer")
+    job11 = JobFactory(company_id=myuuid_company, title="NET developer")
+    job12 = JobFactory(company_id=myuuid_company, title="Xamarin developer")
+    job13 = JobFactory(company_id=myuuid_company, title="Android developer II")
+    job14 = JobFactory(company_id=myuuid_company, title="Devops Engineer")
+    job15 = JobFactory(company_id=myuuid_company, title="Wordpress developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.add(job3)
+    app.db.session.add(job4)
+    app.db.session.add(job5)
+    app.db.session.add(job6)
+    app.db.session.add(job7)
+    app.db.session.add(job8)
+    app.db.session.add(job9)
+    app.db.session.add(job10)
+    app.db.session.add(job11)
+    app.db.session.add(job12)
+    app.db.session.add(job13)
+    app.db.session.add(job14)
+    app.db.session.add(job15)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = '/browse/jobs?c=10&p=1&q=android%20develo'  
+    #headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    assert len(response.json["jobs"]) == 2
+    assert response.json["page_count"] == 1
+
+
+
+# merging encoded and case insensitivity test
+def test_search_browse_unique_job_titles(client):
+    
+    mimetype = 'application/json'
+    headers = {
+        'Content-Type': mimetype,
+        'Accept': mimetype
+    }
+
+    
+    pass_hash = sha256_crypt.hash("password")
+    myuuid = uuid.uuid4()
+    myuuid_company = uuid.uuid4()
+    user = UserFactory(password=pass_hash)
+    user.id = myuuid
+    company = CompanyFactory(user_id=myuuid)
+    company.id = myuuid_company
+    company_address = CompanyAddressFactory(company_id=myuuid_company)
+    company_user = CompanyUser(myuuid, myuuid_company)
+    job = JobFactory(company_id=myuuid_company, title="Clojure developer")
+    job2 = JobFactory(company_id=myuuid_company, title="Android developer")
+    job3 = JobFactory(company_id=myuuid_company, title="IOS developer")
+    job4 = JobFactory(company_id=myuuid_company, title="Java Developer")
+    job5 = JobFactory(company_id=myuuid_company, title="Elixir developer")
+    job6 = JobFactory(company_id=myuuid_company, title="Kotlin developer")
+    job7 = JobFactory(company_id=myuuid_company, title="Python developer")
+    job8 = JobFactory(company_id=myuuid_company, title="Php developer")
+    job9 = JobFactory(company_id=myuuid_company, title="Reactjs developer")
+    job10 = JobFactory(company_id=myuuid_company, title="React Native developer")
+    job11 = JobFactory(company_id=myuuid_company, title="NET developer")
+    job12 = JobFactory(company_id=myuuid_company, title="Xamarin developer")
+    job13 = JobFactory(company_id=myuuid_company, title="Android developer II")
+    job14 = JobFactory(company_id=myuuid_company, title="Devops Engineer")
+    job15 = JobFactory(company_id=myuuid_company, title="Wordpress developer")
+    job16 = JobFactory(company_id=myuuid_company, title="Wordpress developer")
+    app.db.session.add(user)
+    app.db.session.add(company)
+    app.db.session.add(company_address)
+    app.db.session.add(company_user)
+    app.db.session.add(job)
+    app.db.session.add(job2)
+    app.db.session.add(job3)
+    app.db.session.add(job4)
+    app.db.session.add(job5)
+    app.db.session.add(job6)
+    app.db.session.add(job7)
+    app.db.session.add(job8)
+    app.db.session.add(job9)
+    app.db.session.add(job10)
+    app.db.session.add(job11)
+    app.db.session.add(job12)
+    app.db.session.add(job13)
+    app.db.session.add(job14)
+    app.db.session.add(job15)
+    app.db.session.add(job16)
+    app.db.session.commit()
+
+    access_token = gen_key({'id': str(myuuid)})
+    url = '/search/jobs?c=10&q=Wordpress%20developer'  
+    #headers["Authorization"] = "JWT " + access_token.decode('utf-8')
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    assert len(response.json["jobs"]) == 1        
