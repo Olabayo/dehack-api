@@ -1207,14 +1207,20 @@ def show_profile_overview():
 
     profile = Profile.query.filter_by(user_id=current_identity.id).first()
     profile_to_dict = {}
+    state_list = State.query.all()
+    state_list_dict = [s.to_dict() for s in state_list]
+    city_list_dict = []
     if bool(profile):
         profile_to_dict = profile.to_dict()
+        city_list = City.query.filter_by(state_id=profile.state_id)
+        city_list_dict = [c.to_dict() for c in city_list]
     education_list = Education.query.filter_by(user_id=current_identity.id).all()
     education_list_dict = [e.to_dict() for e in education_list]
     experience_list = WorkExperience.query.filter_by(user_id=current_identity.id).all()
     experience_list_dict = [ex.to_dict() for ex in experience_list]
+    # add state and city
     return jsonify({"msg": "profile overview", "overview": {"profile": profile_to_dict, "education": education_list_dict,
-     "experience": experience_list_dict}}), 200
+     "experience": experience_list_dict}, "state_list": state_list_dict, "city_list": city_list_dict}), 200
 
 
 #/activate/<id>
