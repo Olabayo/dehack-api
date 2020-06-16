@@ -40,7 +40,7 @@ mail = Mail(app)
 
 from .models import User, RegistrationProfile, PasswordReset, Company, \
 CompanyUser, State, City, CompanyAddress, Profile, WorkExperience, Education, \
-Job  
+Job, JobApplication
 
 def init_db():
     db.create_all()
@@ -2384,9 +2384,20 @@ def show_guest_job(id):
         schema:
           $ref: '#/definitions/Status'
     """
+    apply_status = False
+    try:
+        _jwt_required("Login Optional")
+        if(current_identity):
+            print(current_identity.id)
+            checkApply = JobApplication.query.filter_by(job_id=id, user_id=current_identity.id).first()
+            if bool(checkApply):
+                apply_status = True
+    except Exception:
+        print("Not logged in")
+    
     job = Job.query.filter_by(id=id).first()
     if bool(job) == True:
-        return jsonify({"msg": "job created", "job": job.to_dict()}), 200 
+        return jsonify({"msg": "job created", "apply_status": apply_status, "job": job.to_dict()}), 200 
     else:
         return jsonify({"msg": "bad request"}), 400
 
@@ -2486,6 +2497,7 @@ def browse_resume():
 
     resumes_query = Profile.query
     # to do
+    page_count = 0
     resume_count = resumes_query.count()
     next = None
     prev = None
@@ -2494,6 +2506,8 @@ def browse_resume():
     try:
         c = int(request.args.get('c'))
         p = int(request.args.get('p'))
+        if resume_count > 0:
+            page_count = math.ceil(resume_count/c)
     except Exception:
         return jsonify({"msg": "Invalid page params"}), 400
     if p > 1:
@@ -2506,6 +2520,149 @@ def browse_resume():
     try:
         resumes_list = resumes_query.order_by(Profile.id.asc()).paginate(p, per_page=c).items
         result = [r.to_dict() for r in resumes_list]
-        return jsonify(msg="jobs result", resumes=result, next = next, prev = prev)      
+        return jsonify(msg="jobs result", resumes=result, next = next, prev = prev, page_count=page_count, count=resume_count)      
     except Exception:
         return jsonify({"msg": "Pagination error"}), 400
+
+
+
+#/jobapplications
+#HTTP Method: POST
+#Create a job application object
+@app.route('/jobapplications', methods=['POST'])
+@jwt_required()
+def store_jobapplication():
+
+    """Endpoint for creating an job applications
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: body
+        in: body
+        description: JSON parameters.
+        schema:
+          properties:
+            job_id:
+              type: integer
+              description: job id.
+              example: 1
+              required: true         
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Job application created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Status'
+    """
+
+    content = request.json
+    if 'job_id' in content:
+        checkApplication = JobApplication.query.filter_by(job_id=content["job_id"], user_id=current_identity.id).first()
+        if bool(checkApplication):
+            return jsonify({"msg": "application already created"}), 200
+        checkProfile = Profile.query.filter_by(user_id=current_identity.id).first()
+        if bool(checkProfile) == False:
+            return jsonify({"msg": "you need to complete your profile"}), 400
+        try:
+            application = JobApplication(content["job_id"], current_identity.id)
+            db.session.add(application)
+            db.session.commit()
+            return jsonify({"msg": "application created"}), 200
+        except Exception:
+             return jsonify({"msg": "server error"}), 500
+    else:
+        return jsonify({"msg": "Bad request"}), 400
+
+
+
+#/jobapplications
+#HTTP Method: GET
+#Retrieve job applications object
+@app.route('/jobapplications', methods=['GET'])
+@jwt_required()
+def get_jobapplication():
+
+    """Endpoint for creating an job applications
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: job_id
+        in: query
+        type: integer
+        required: true
+        description: job id         
+    definitions:
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string          
+    responses:
+      200:
+        description: Job application created
+        schema:
+          $ref: '#/definitions/Status'
+      400:
+        description: Bad request missing post param
+        schema:
+          $ref: '#/definitions/Status'    
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Status'
+    """
+    page_count = 0
+      
+    if 'job_id' in request.args:
+        applications_query = JobApplication.query.filter_by(job_id = int(request.args.get('job_id')))\
+        .join(Profile, JobApplication.user_id==Profile.user_id)\
+        .join(User, JobApplication.user_id==User.id)\
+        .add_columns(User.first_name, User.last_name, Profile.cover_story, Profile.phone, Profile.email, Profile.linkedin_url,
+         Profile.street, Profile.state_id, Profile.city_id, Profile.zip_code, Profile.id)
+        resume_count = applications_query.count()
+        #print("resume count " + str(resume_count))
+        next = None
+        prev = None
+        c = 10
+        p = 1
+        try:
+            c = int(request.args.get('c'))
+            p = int(request.args.get('p'))
+        except Exception:
+            pass
+        if resume_count > 0:
+            page_count = math.ceil(resume_count/c)  
+        applications = applications_query.paginate(p, per_page=c).items
+        application_list = [{"user":{"first_name": a.first_name, "last_name": a.last_name}, "id": a.id,
+        "email": a.email, "phone": a.phone, "cover_story": a.cover_story, "street": a.street} for a in applications]
+        if p > 1:
+            check_prev = p - 1
+            if resume_count >= c * check_prev:
+                prev = request.base_url + "?c=" + str(c) + "&p=" + str(check_prev)
+        check_next = p + 1  
+        if resume_count >= c * check_next:
+            next = request.base_url + "?c=" + str(c) + "&p=" + str(check_next)
+        return jsonify({"msg": "applications", "resumes": application_list, "next": next, "prev": prev, "page_count": page_count, "count": resume_count}), 200
+    else: 
+        return jsonify({"msg": "bad request"}), 400

@@ -174,6 +174,7 @@ class Profile(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=False, unique=True, nullable=False)
+    cover_story = db.Column(db.String(500), unique=False, nullable=True)
     phone = db.Column(db.String(16), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     linkedin_url = db.Column(db.String(120), unique=True, nullable=True)
@@ -292,4 +293,27 @@ class Job(db.Model, SerializerMixin):
 
     def __repr__(self):
 
-        return '<Job %r>' % self.title               
+        return '<Job %r>' % self.title
+
+
+class JobApplication(db.Model, SerializerMixin):
+
+    __tablename__ = "job_applications"
+
+    serialize_types = (
+        (uuid.UUID, serialize_uuid),
+    )
+
+    job_id = db.Column(db.Integer, nullable=False, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), nullable=False, primary_key=True)
+    user = db.relationship('User', foreign_keys=[user_id], primaryjoin='User.id == JobApplication.user_id')
+    job = db.relationship('Job', foreign_keys=[job_id], primaryjoin='Job.id == JobApplication.job_id')
+
+    def __init__(self, job_id, user_id):
+
+        self.job_id = job_id
+        self.user_id = user_id
+
+    def __repr__(self):
+
+        return '<JobApplication %r>' % self.job.title                      

@@ -182,6 +182,16 @@ ALTER SEQUENCE public.education_id_seq OWNED BY public.education.id;
 
 
 --
+-- Name: job_applications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.job_applications (
+    job_id integer NOT NULL,
+    user_id uuid NOT NULL
+);
+
+
+--
 -- Name: jobs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -449,7 +459,7 @@ ALTER TABLE ONLY public.work_experiences ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-96588ae9ac8d
+a8c43e9aaeef
 \.
 
 
@@ -30373,6 +30383,16 @@ COPY public.company_users (id, user_id, company_id, role) FROM stdin;
 
 COPY public.education (id, user_id, institution, date_from, date_to, award, education_type_id, program_length, industry, skills, skills_array) FROM stdin;
 1	3476daa2-341f-42da-ac73-03f8f99f7b39	Hack Reactors	2019-01-12 00:00:00	2019-07-12 00:00:00	Fullstack Engineer Certificate of Completion 	1	6	Software Engineering	fullstack developer, devops, java, sql	{"fullstack developer"," devops"," java"," sql"}
+2	3476daa2-341f-42da-ac73-03f8f99f7b39	North Shore Community College	2019-05-12 00:00:00	2021-05-10 00:00:00	Associate Degree	1	52	Computer Programming	TDD, Kotlin, Java, Android Api	{TDD," Kotlin"," Java"," Android Api"}
+\.
+
+
+--
+-- Data for Name: job_applications; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.job_applications (job_id, user_id) FROM stdin;
+1	3476daa2-341f-42da-ac73-03f8f99f7b39
 \.
 
 
@@ -30398,7 +30418,8 @@ COPY public.password_reset (id, email, reset_key, used, created_at) FROM stdin;
 --
 
 COPY public.profiles (id, user_id, cover_story, phone, email, linkedin_url, street, state_id, city_id, zip_code) FROM stdin;
-1	3476daa2-341f-42da-ac73-03f8f99f7b39	I am a great team player and very hardworking	8572224685	olabayo966@yahoo.com	https://linkedin.com/0olaobayo	Test Streets	1	1009	01657
+1	3476daa2-341f-42da-ac73-03f8f99f7b39	I am a great team player and very hardworking	8572224685	olabayo96@yahoo.com	https://linkedin.com/0olaobayo	Test Streets	22	10088	01657
+3	0d42391e-8922-482d-919b-a0cd152c090f	\N	8647767677	Kimsmith@gmail.com	https://linkedin.com/0olaobayostetet	Test Streets	5	1685	01657
 \.
 
 
@@ -30410,6 +30431,7 @@ COPY public.registration_profile (user_id, activation_key, used) FROM stdin;
 d33a2718-afe3-42ff-a1c2-0ea977de1759	5a6dce72-f9cc-4547-90d6-f538c549685e	t
 3476daa2-341f-42da-ac73-03f8f99f7b39	2c3a7f25-d1f2-40f7-abee-69ee79f8b582	f
 2da6144e-2f13-47a8-892a-105c5e008031	c6b06480-ba1b-4183-a4a1-0f63943789e9	f
+0d42391e-8922-482d-919b-a0cd152c090f	46db708f-f637-4c6b-9b31-43a10e665050	f
 \.
 
 
@@ -30481,6 +30503,7 @@ COPY public.users (id, email, password, first_name, last_name, status, created_a
 d33a2718-afe3-42ff-a1c2-0ea977de1759	dehack@yahoo.com	$5$rounds=535000$bJ2SnJ2VoD9Hop9M$xEK6uQIbqO0X47P0UOGGQCtBtMaFsmRG897jZuUSCjD	Dehack	Dehack	t	2020-05-25 16:41:05.094744
 2da6144e-2f13-47a8-892a-105c5e008031	dehack3@yahoo.com	$5$rounds=535000$QrrmkYWuQDMl2DWi$M72zNLf4ESPzhs1dUxny5FiLGnUzMadRTrvqL6MqXj.	Ayodeji	Bambam	f	2020-05-26 14:36:38.353133
 3476daa2-341f-42da-ac73-03f8f99f7b39	dehack2@yahoo.com	$5$rounds=535000$Tf8yCkRknUBavgQw$7oaKBiLUwO7W8KimrudN18NWhQJj8S2QDKX0YxvU55C	Olabayo	Onile-Ere	f	2020-05-26 05:12:33.205621
+0d42391e-8922-482d-919b-a0cd152c090f	Kimsmith@gmail.com	$5$rounds=535000$fT4GxUb/AI5xVmou$zCYn1.9tZS6ppy1CEjtJvNw0x4Wd57pp6dXP8PsR8VB	Kim	Smith	f	2020-06-14 22:43:11.259016
 \.
 
 
@@ -30518,7 +30541,7 @@ SELECT pg_catalog.setval('public.company_users_id_seq', 1, true);
 -- Name: education_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.education_id_seq', 1, true);
+SELECT pg_catalog.setval('public.education_id_seq', 2, true);
 
 
 --
@@ -30539,7 +30562,7 @@ SELECT pg_catalog.setval('public.password_reset_id_seq', 1, false);
 -- Name: profiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.profiles_id_seq', 1, true);
+SELECT pg_catalog.setval('public.profiles_id_seq', 3, true);
 
 
 --
@@ -30642,6 +30665,14 @@ ALTER TABLE ONLY public.company_users
 
 ALTER TABLE ONLY public.education
     ADD CONSTRAINT education_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: job_applications job_applications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.job_applications
+    ADD CONSTRAINT job_applications_pkey PRIMARY KEY (job_id, user_id);
 
 
 --
