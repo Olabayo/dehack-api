@@ -1223,6 +1223,111 @@ def show_profile_overview():
      "experience": experience_list_dict}, "state_list": state_list_dict, "city_list": city_list_dict}), 200
 
 
+
+@app.route('/viewprofileoverview', methods=['GET'])
+@jwt_required()
+def view_profile_overview():
+    """Endpoint for retrieving profile overview
+    This is using docstrings for specifications.
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+    definitions:    
+      Status:
+        type: object
+        properties:
+          msg:
+            type: string
+      ExperienceObj:
+        type: object
+        properties:
+          id:
+            type: integer
+          user_id: 
+            type: string
+          company:
+            type: string
+          role:
+            type: string
+          description:
+            type: string
+          skills:
+            type: string
+          experience_type_id:
+            type: integer              
+      ResponseProfileOverview:
+        type: object
+        properties:
+          msg:
+            type: string
+          overview:
+            type: object
+            properties:
+              profile:
+               type: object
+               properties:
+                 id:
+                  type: integer
+                 user_id: 
+                   type: string 
+                 cover_story:
+                   type: string
+                 phone:
+                   type: string
+                 email:
+                   type: string
+                 linkedin_url:
+                   type: string
+                 street:
+                   type: string
+                 state_id:
+                   type: integer
+                 city_id:
+                   type: integer
+                 zip_code:
+                   type: string
+              experience:
+               type: array
+               items:
+                 $ref: '#/definitions/ExperienceObj'
+              education:
+               type: array
+               items:
+                 $ref: '#/definitions/EducationObj'   
+    responses:
+      200:
+        description: Request success
+        schema:
+          $ref: '#/definitions/ResponseProfileOverview'
+      400:
+        description: Request error
+        schema:
+          $ref: '#/definitions/Status'    
+    """
+
+    profile_id = int(request.args.get('profile_id'))
+    profile = Profile.query.filter_by(id=profile_id).first()
+    profile_to_dict = {}
+    state_list = State.query.all()
+    state_list_dict = [s.to_dict() for s in state_list]
+    city_list_dict = []
+    if bool(profile):
+        profile_to_dict = profile.to_dict()
+        city_list = City.query.filter_by(state_id=profile.state_id)
+        city_list_dict = [c.to_dict() for c in city_list]
+    education_list = Education.query.filter_by(user_id=profile.user_id).all()
+    education_list_dict = [e.to_dict() for e in education_list]
+    experience_list = WorkExperience.query.filter_by(user_id=profile.user_id).all()
+    experience_list_dict = [ex.to_dict() for ex in experience_list]
+    # add state and city
+    return jsonify({"msg": "profile overview", "overview": {"profile": profile_to_dict, "education": education_list_dict,
+     "experience": experience_list_dict}, "state_list": state_list_dict, "city_list": city_list_dict}), 200
+
+
+
 #/activate/<id>
 #HTTP Method: GET
 @app.route('/education/<string:id>', methods=['GET'])
@@ -2183,7 +2288,7 @@ def browse_job():
     """
     jobs_query = Job.query
     if 'q' in request.args and request.args.get('q') != "":
-        jobs_query = jobs_query.filter(Job.title.like('%' + request.args.get('q') + '%'))
+        jobs_query = jobs_query.filter(Job.title.ilike('%' + request.args.get('q') + '%'))
     # to do
     page_count = 0
     job_count = jobs_query.count()
