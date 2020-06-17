@@ -13,7 +13,7 @@ from passlib.hash import sha256_crypt
 from flask_mail import Mail
 from flask_migrate import Migrate
 
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt import JWT, jwt_required, current_identity, _jwt_required
 
 from .utils import activation_email, user_activated_email, reset_password_email
 
